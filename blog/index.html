@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog — Dillan Valor</title>
+  <meta name="description" content="Technical writeups, security notes, and infrastructure lessons from the field.">
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="../index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../experience.html">Experience</a>
+        <a href="index.html" class="active">Blog</a>
+        <a href="../index.html#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="container">
+        <div class="section-header">
+          <div class="kicker">Technical Writeups</div>
+          <h1>Blog</h1>
+          <p class="muted">Security notes, infrastructure lessons, and technical deep-dives from real-world work.</p>
+        </div>
+
+        <!-- Placeholder for future blog posts -->
+        <div style="text-align: center; padding: 4rem 2rem; background: var(--bg-elevated); border-radius: var(--radius); border: 1px solid var(--border);">
+          <h3 style="color: var(--gold); margin-bottom: 1rem;">Coming Soon</h3>
+          <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
+            I'm working on technical writeups covering vulnerability remediation, cloud migrations, network troubleshooting, and homelab projects. Check back soon for detailed guides and lessons learned from the field.
+          </p>
+        </div>
+
+        <!-- Example blog post structure (commented out for now) -->
+        <!--
+        <div class="card-grid" style="grid-template-columns: 1fr;">
+          <a href="post-slug.html" class="blog-preview">
+            <div class="blog-date">December 1, 2024</div>
+            <h3>Internal Vulnerability Assessment: Vonahi vPenTest in a Medical Environment</h3>
+            <p>Deep dive into deploying Vonahi's internal scanner, triaging findings, and systematically remediating SMBv1, null sessions, and exposed management interfaces across a multi-site healthcare network.</p>
+            <div class="tags">
+              <span class="tag">Vulnerability Management</span>
+              <span class="tag">Healthcare</span>
+              <span class="tag">Network Hardening</span>
+            </div>
+          </a>
+
+          <a href="post-slug.html" class="blog-preview">
+            <div class="blog-date">November 15, 2024</div>
+            <h3>FSLogix Profile Rescue for Azure Cloud PCs</h3>
+            <p>How I diagnosed and fixed a corrupted FSLogix profile causing severe performance issues on an Azure Cloud PC, while preserving all user data through OneDrive sync.</p>
+            <div class="tags">
+              <span class="tag">Azure</span>
+              <span class="tag">FSLogix</span>
+              <span class="tag">Troubleshooting</span>
+            </div>
+          </a>
+        </div>
+        -->
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorworks.dev · All rights reserved</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
