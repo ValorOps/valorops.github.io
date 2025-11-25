@@ -1,203 +1,232 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-    <title>Projects &amp; Labs — Dillan Valor</title>
-    <meta
-      name="description"
-      content="Selected security, infrastructure, and lab projects that show how I work through real problems."
-    />
-    <link rel="stylesheet" href="assets/styles.css" />
-  </head>
-  <body>
-    <header class="site-header">
-      <div class="container header-inner">
-        <a href="index.html" class="site-logo">
-          DILLAN <span>VALOR</span>
-        </a>
-        <nav class="nav">
-          <a href="experience.html">Experience</a>
-          <a href="projects.html">Projects</a>
-          <a href="education.html">Education</a>
-          <a href="index.html#contact">Contact</a>
-        </nav>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projects — Dillan Valor</title>
+  <meta name="description" content="Real-world cybersecurity and infrastructure projects: vulnerability assessments, cloud migrations, network hardening, and homelab experiments.">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="projects.html" class="active">Projects</a>
+        <a href="experience.html">Experience</a>
+        <a href="blog/index.html">Blog</a>
+        <a href="index.html#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="container">
+        <div class="section-header">
+          <div class="kicker">Real-World Projects</div>
+          <h1>Work I've Actually Done</h1>
+          <p class="muted">Not just job responsibilities—these are hands-on projects with measurable outcomes, documented processes, and real impact.</p>
+        </div>
+
+        <div class="card-grid">
+          <article class="card">
+            <div class="card-header">
+              <h3>Internal Vulnerability Assessment & Remediation</h3>
+              <span class="card-meta">Vonahi vPenTest</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> Multi-site medical organization handling PHI<br>
+              Led end-to-end deployment, analysis, and remediation of internal vulnerability scans. Didn't just run a scan and send a PDF—I deployed the agent, tuned the scans, and personally fixed every critical finding.
+            </p>
+            <ul>
+              <li>Deployed Vonahi internal agent into production medical network across multiple subnets</li>
+              <li>Systematically remediated high/critical findings: disabled SMBv1, enabled SMB signing, restricted null sessions, hardened SNMP</li>
+              <li>Migrated management interfaces to HTTPS/SSH-only, removed Telnet and unencrypted protocols</li>
+              <li>Ran rescan cycles to verify fixes held and no regressions were introduced</li>
+              <li><strong>Result:</strong> Significant reduction in lateral movement paths and exposed management endpoints</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">Vulnerability Management</span>
+              <span class="tag">Network Hardening</span>
+              <span class="tag">Healthcare/PHI</span>
+              <span class="tag">Compliance</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>FSLogix Profile Rescue for Azure Cloud PC</h3>
+              <span class="card-meta">Azure · FSLogix · OneDrive</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> MSP client with Azure Cloud PCs<br>
+              User's Cloud PC became unusably slow due to corrupted FSLogix profile. Rebuilt profile container while preserving user data through OneDrive sync strategy.
+            </p>
+            <ul>
+              <li>Diagnosed FSLogix profile corruption causing severe performance degradation</li>
+              <li>Documented sync state, identified critical files protected by OneDrive</li>
+              <li>Rebuilt FSLogix profile container, re-synced OneDrive, verified performance restoration</li>
+              <li>No data loss, user back to full productivity within maintenance window</li>
+              <li><strong>Result:</strong> Cloud PC performance restored, documented procedure for future similar issues</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">Azure</span>
+              <span class="tag">FSLogix</span>
+              <span class="tag">Troubleshooting</span>
+              <span class="tag">User Recovery</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>SentinelOne EDR Tuning: Liongard Nmap Detection</h3>
+              <span class="card-meta">SentinelOne · Network Scanning</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> MSP with SentinelOne EDR and Liongard monitoring<br>
+              Triaged repeated SentinelOne alerts for nmap activity. Identified Liongard's network discovery scans as the source and crafted a scoped exclusion policy without blanket-whitelisting nmap.
+            </p>
+            <ul>
+              <li>Investigated SentinelOne threat detections flagging nmap activity on endpoints</li>
+              <li>Traced activity to Liongard agent performing legitimate network discovery</li>
+              <li>Created targeted exclusion in SentinelOne for Liongard's process/path while maintaining detection for actual threats</li>
+              <li><strong>Result:</strong> Eliminated false positives without weakening EDR posture</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">EDR</span>
+              <span class="tag">Alert Tuning</span>
+              <span class="tag">MSP Operations</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>Pi-hole DNS Filtering (Docker on Windows)</h3>
+              <span class="card-meta">Docker · DNS · Home Lab</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> Home network, Windows host with Docker Desktop<br>
+              Deployed Pi-hole in Docker as network-wide DNS filter. Overcame Docker NAT limitations and VPN interference to successfully block ads, trackers, and malicious domains.
+            </p>
+            <ul>
+              <li>Deployed Pi-hole container, configured upstream DNS (Cloudflare), opened Windows firewall ports</li>
+              <li>Added curated blocklists: StevenBlack, AdGuard, Phishing Army—<strong>~480k domains blocked</strong></li>
+              <li>Troubleshot VPN (Twingate) interference breaking upstream DNS queries</li>
+              <li>Documented Docker NAT limitations preventing per-device policies and planned migration to dedicated hardware</li>
+              <li><strong>Result:</strong> Working network-wide ad/tracker blocking, clear documentation for Phase 2 improvements</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">DNS Security</span>
+              <span class="tag">Docker</span>
+              <span class="tag">Home Lab</span>
+              <span class="tag">Troubleshooting</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>ESXi Host & iDRAC BIOS Configuration</h3>
+              <span class="card-meta">VMware · Dell Hardware</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> MSP client datacenter<br>
+              Upgraded BIOS on Dell PowerEdge servers via iDRAC and reconfigured ESXi hosts post-upgrade. Managed VM downtime coordination and rollback planning.
+            </p>
+            <ul>
+              <li>Planned maintenance window with client, documented current BIOS/firmware versions</li>
+              <li>Performed BIOS upgrades via iDRAC, verified hardware compatibility post-upgrade</li>
+              <li>Reconfigured ESXi host settings, tested VM boot and network connectivity</li>
+              <li>No data loss, minimal downtime, smooth return to service</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">VMware</span>
+              <span class="tag">Dell Hardware</span>
+              <span class="tag">Firmware</span>
+              <span class="tag">Change Management</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>Multi-Boot USB Toolkit with Ventoy</h3>
+              <span class="card-meta">System Recovery</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> MSP support across diverse client systems<br>
+              Created single multi-boot USB with Ventoy holding Windows installers, Linux distros, and rescue tools. Drag-and-drop ISO management—no re-flashing required.
+            </p>
+            <ul>
+              <li>Deployed Ventoy to USB, added Windows 10/11 ISOs, Kali Linux, rescue environments</li>
+              <li>Used regularly for OS installs, system recovery, and live forensics across 40+ clients</li>
+              <li><strong>Result:</strong> One "Swiss Army knife" USB replacing stack of drives, massive time-saver in MSP work</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">System Recovery</span>
+              <span class="tag">Efficiency Tool</span>
+              <span class="tag">MSP</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>Kali Linux on Chromebook</h3>
+              <span class="card-meta">Security Tooling · Linux</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> Personal security lab<br>
+              Converted a Chromebook into a dedicated Kali Linux security lab by replacing ChromeOS entirely. Configured firmware, optimized for Chromebook hardware, and built a curated offensive security toolkit.
+            </p>
+            <ul>
+              <li>Unlocked firmware, flashed Kali to internal storage, verified hardware compatibility (Wi-Fi, trackpad, power)</li>
+              <li>Customized terminal, keybindings, and workflow for portable security lab</li>
+              <li>Maintains separation from daily-driver systems for focused security practice and offensive tooling</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">Offensive Security</span>
+              <span class="tag">Linux</span>
+              <span class="tag">Custom Build</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>Raspberry Pi 5 NVMe NAS</h3>
+              <span class="card-meta">In Progress</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> Home lab infrastructure<br>
+              Designing a compact, low-power Raspberry Pi 5-based NAS and media server with 8TB+ NVMe storage. Planned to run SMB/NFS shares, media streaming (Plex/Jellyfin), and Dockerized homelab services.
+            </p>
+            <ul>
+              <li>Planning NVMe HAT configuration, thermals, and case design for 24/7 operation</li>
+              <li>Evaluating single-disk simplicity vs. redundancy/mirroring for data protection</li>
+              <li>Foundation for self-hosted monitoring, security tools, and media library</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">NAS</span>
+              <span class="tag">Self-Hosted</span>
+              <span class="tag">Raspberry Pi</span>
+              <span class="tag">In Progress</span>
+            </div>
+          </article>
+        </div>
       </div>
-    </header>
+    </section>
+  </main>
 
-    <main>
-      <section class="page-header">
-        <div class="container">
-          <p class="section-kicker">Projects &amp; Labs</p>
-          <h1 class="page-title">Selected Projects &amp; Coursework</h1>
-          <p class="page-intro">
-            Infrastructure initiatives, security implementations, and lab
-            write-ups that show how I approach problems end-to-end.
-          </p>
-        </div>
-      </section>
-
-      <section>
-        <div class="container card-grid">
-          <!-- Network hardening -->
-          <article class="card">
-            <div class="card-title-row">
-              <div>
-                <h2 class="card-title">Network Hardening Playbook</h2>
-                <div class="card-meta">
-                  FortiGate · Windows Server · Azure AD
-                </div>
-              </div>
-            </div>
-            <p class="card-body">
-              Baseline for FortiGate, Windows Server, and Azure AD environments,
-              including MFA enforcement, firewall templates, and rollback plans
-              that MSP teams can actually follow.
-            </p>
-            <ul class="card-list">
-              <li>
-                Created opinionated but practical hardening checklists for new
-                client onboardings.
-              </li>
-              <li>
-                Documented “before/after” policy states so changes are
-                traceable, not mystery configs.
-              </li>
-              <li>
-                Focused on fast wins: lock down external exposure without
-                breaking business-critical flows.
-              </li>
-            </ul>
-            <div class="card-tags">
-              <span class="card-tag">Network hardening</span>
-              <span class="card-tag">Fortinet</span>
-              <span class="card-tag">Change control</span>
-            </div>
-          </article>
-
-          <!-- M365 security ops lab -->
-          <article class="card">
-            <div class="card-title-row">
-              <div>
-                <h2 class="card-title">
-                  Microsoft 365 Security Operations Lab
-                </h2>
-                <div class="card-meta">
-                  Defender · Sentinel · Purview DLP
-                </div>
-              </div>
-            </div>
-            <p class="card-body">
-              Hands-on lab series walking through simulated phishing, malware,
-              and data loss scenarios in Microsoft 365, focusing on detection,
-              investigation, and documentation.
-            </p>
-            <ul class="card-list">
-              <li>
-                Threat hunting exercises across Defender for Endpoint and
-                Sentinel to trace lateral movement.
-              </li>
-              <li>
-                Purview DLP rules tuned for realistic MSP tenants instead of
-                “turn on everything and hope”.
-              </li>
-              <li>
-                Runbook templates for triage, escalation, and customer updates.
-              </li>
-            </ul>
-            <div class="card-tags">
-              <span class="card-tag">Threat hunting</span>
-              <span class="card-tag">DLP</span>
-              <span class="card-tag">Runbooks</span>
-            </div>
-          </article>
-
-          <!-- CTF write-up -->
-          <article class="card">
-            <div class="card-title-row">
-              <div>
-                <h2 class="card-title">CTF Write-Up: Web Exploitation</h2>
-                <div class="card-meta">Capture the Flag · AppSec</div>
-              </div>
-            </div>
-            <p class="card-body">
-              Exploit breakdown and secure-coding checklist from a web
-              exploitation challenge, focusing less on “tricks” and more on what
-              defenders and engineers should fix.
-            </p>
-            <ul class="card-list">
-              <li>
-                Step-by-step notes of enumeration, exploitation, and
-                post-exploitation.
-              </li>
-              <li>
-                Mapped findings to concrete mitigations (headers, input
-                validation, logging).
-              </li>
-              <li>
-                Presented in a format that both security and dev teams can use.
-              </li>
-            </ul>
-            <div class="card-tags">
-              <span class="card-tag">CTF</span>
-              <span class="card-tag">Web security</span>
-              <span class="card-tag">Education</span>
-            </div>
-          </article>
-
-          <!-- Incident documentation toolkit -->
-          <article class="card">
-            <div class="card-title-row">
-              <div>
-                <h2 class="card-title">Incident Documentation Toolkit</h2>
-                <div class="card-meta">Templates · SOPs · Playbooks</div>
-              </div>
-            </div>
-            <p class="card-body">
-              Template-driven SOPs, severity matrices, and communication
-              checklists designed for MSP incidents so customers always know
-              what’s happening and why.
-            </p>
-            <ul class="card-list">
-              <li>
-                Standardized severity levels and response expectations for
-                security vs. availability events.
-              </li>
-              <li>
-                Timeline-oriented note-taking format that feeds directly into
-                post-incident reports.
-              </li>
-              <li>
-                Built to be reused across clients with room for tenant-specific
-                quirks.
-              </li>
-            </ul>
-            <div class="card-tags">
-              <span class="card-tag">Incident response</span>
-              <span class="card-tag">Documentation</span>
-              <span class="card-tag">MSP</span>
-            </div>
-          </article>
-        </div>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <div class="container footer-inner">
-        <div>&copy; <span id="year"></span> Dillan Valor • valorworks.dev</div>
-        <div class="footer-links">
-          <a href="mailto:">Email</a>
-          <a href="https://github.com/DillanValor" target="_blank">GitHub</a>
-          <a href="assets/Dillan_Valor_Resume.pdf">Resume</a>
-        </div>
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorworks.dev · All rights reserved</div>
       </div>
-      <script>
-        document.getElementById("year").textContent =
-          new Date().getFullYear();
-      </script>
-    </footer>
-  </body>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
 </html>
