@@ -6,6 +6,35 @@
   <title>Dillan Valor — IT Engineer & Cybersecurity Specialist</title>
   <meta name="description" content="Navy Submarine veteran and IT Engineer focused on Microsoft 365, Azure, Fortinet, and security operations for MSP environments.">
   <link rel="stylesheet" href="assets/styles.css">
+  <style>
+    /* Dolphins insignia styling */
+    .dolphins-insignia {
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 180px;
+      height: auto;
+      opacity: 0.95;
+      transition: opacity 0.3s ease;
+    }
+    
+    .dolphins-insignia:hover {
+      opacity: 1;
+    }
+    
+    /* Make sure header has position relative for absolute positioning */
+    header {
+      position: relative;
+    }
+    
+    @media (max-width: 768px) {
+      .dolphins-insignia {
+        width: 120px;
+        right: 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -19,6 +48,8 @@
         <a href="#contact">Contact</a>
       </nav>
     </div>
+    <!-- Submarine Warfare Dolphins Insignia -->
+    <img src="assets/dolphins.png" alt="Enlisted Submarine Warfare Insignia" class="dolphins-insignia">
   </header>
 
   <main>
