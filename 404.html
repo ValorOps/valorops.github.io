@@ -1,65 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-    <title>Page Not Found — Dillan Valor</title>
-    <meta
-      name="description"
-      content="That page went silent. It may have been renamed or moved."
-    />
-    <link rel="stylesheet" href="assets/styles.css" />
-  </head>
-  <body>
-    <header class="site-header">
-      <div class="container header-inner">
-        <a href="index.html" class="site-logo">
-          DILLAN <span>VALOR</span>
-        </a>
-        <nav class="nav">
-          <a href="experience.html">Experience</a>
-          <a href="projects.html">Projects</a>
-          <a href="education.html">Education</a>
-          <a href="index.html#contact">Contact</a>
-        </nav>
-      </div>
-    </header>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - Page Not Found — Dillan Valor</title>
+  <meta name="description" content="Page not found.">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="projects.html">Projects</a>
+        <a href="experience.html">Experience</a>
+        <a href="blog/index.html">Blog</a>
+        <a href="index.html#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
 
-    <main>
-      <section class="not-found">
-        <div class="container">
-          <div class="not-found-code">404</div>
-          <h1 class="not-found-title">That page went silent.</h1>
-          <p class="not-found-text">
-            It may have been renamed or lives elsewhere. Use the navigation to
-            explore my experience, projects, or education—or head back home.
-          </p>
-          <div class="hero-ctas" style="justify-content: center">
-            <a href="index.html" class="btn btn-primary">Return home</a>
-            <a href="index.html#contact" class="btn btn-outline">
-              Contact Dillan
-            </a>
-          </div>
+  <main>
+    <section style="padding: 6rem 0;">
+      <div class="container" style="text-align: center; max-width: 700px;">
+        <div class="kicker" style="display: inline-flex; margin-bottom: 2rem;">
+          Error 404
         </div>
-      </section>
-    </main>
+        
+        <h1 style="margin-bottom: 1.5rem;">
+          Page <span class="highlight">Not Found</span>
+        </h1>
+        
+        <p class="lead" style="margin-bottom: 3rem;">
+          That link didn't work. It might be an old URL, a typo, or a page that's been moved.
+        </p>
 
-    <footer class="site-footer">
-      <div class="container footer-inner">
-        <div>&copy; <span id="year"></span> Dillan Valor • valorworks.dev</div>
-        <div class="footer-links">
-          <a href="mailto:">Email</a>
-          <a href="https://github.com/DillanValor" target="_blank">GitHub</a>
-          <a href="assets/Dillan_Valor_Resume.pdf">Resume</a>
+        <div style="background: var(--bg-elevated); border: 1px solid var(--border); border-left: 3px solid var(--gold); border-radius: var(--radius); padding: 2rem; margin-bottom: 3rem; text-align: left;">
+          <h3 style="color: var(--gold); margin: 0 0 1rem; font-size: 1rem;">Try these instead:</h3>
+          <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary); line-height: 2;">
+            <li><a href="index.html" style="color: var(--text-primary); text-decoration: none; border-bottom: 1px solid var(--gold);">Homepage</a> - Start here</li>
+            <li><a href="projects.html" style="color: var(--text-primary); text-decoration: none; border-bottom: 1px solid var(--gold);">Projects</a> - Real-world work</li>
+            <li><a href="experience.html" style="color: var(--text-primary); text-decoration: none; border-bottom: 1px solid var(--gold);">Experience</a> - Career history</li>
+            <li><a href="blog/index.html" style="color: var(--text-primary); text-decoration: none; border-bottom: 1px solid var(--gold);">Blog</a> - Technical writeups</li>
+          </ul>
         </div>
+
+        <a href="index.html" class="btn btn-primary">Go to Homepage</a>
       </div>
-      <script>
-        document.getElementById("year").textContent =
-          new Date().getFullYear();
-      </script>
-    </footer>
-  </body>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorworks.dev · All rights reserved</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
 </html>
