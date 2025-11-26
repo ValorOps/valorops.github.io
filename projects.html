@@ -5,7 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Projects — Dillan Valor</title>
   <meta name="description" content="Real-world cybersecurity and infrastructure projects: vulnerability assessments, cloud migrations, network hardening, and homelab experiments.">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon-256x256.png">
+  
   <link rel="stylesheet" href="assets/styles.css">
+  <style>
+    /* Dolphins insignia styling */
+    .dolphins-insignia {
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 180px;
+      height: auto;
+      opacity: 0.95;
+      transition: opacity 0.3s ease;
+    }
+    
+    .dolphins-insignia:hover {
+      opacity: 1;
+    }
+    
+    header {
+      position: relative;
+    }
+    
+    @media (max-width: 768px) {
+      .dolphins-insignia {
+        width: 120px;
+        right: 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -19,6 +54,7 @@
         <a href="index.html#contact">Contact</a>
       </nav>
     </div>
+    <img src="assets/dolphins.png" alt="Enlisted Submarine Warfare Insignia" class="dolphins-insignia">
   </header>
 
   <main>
@@ -31,54 +67,6 @@
         </div>
 
         <div class="card-grid">
-          <article class="card">
-            <div class="card-header">
-              <h3>Internal Vulnerability Assessment & Remediation</h3>
-              <span class="card-meta">Vonahi vPenTest</span>
-            </div>
-            <p>
-              <strong>Environment:</strong> Multi-site medical organization handling PHI<br>
-              Led end-to-end deployment, analysis, and remediation of internal vulnerability scans. Didn't just run a scan and send a PDF—I deployed the agent, tuned the scans, and personally fixed every critical finding.
-            </p>
-            <ul>
-              <li>Deployed Vonahi internal agent into production medical network across multiple subnets</li>
-              <li>Systematically remediated high/critical findings: disabled SMBv1, enabled SMB signing, restricted null sessions, hardened SNMP</li>
-              <li>Migrated management interfaces to HTTPS/SSH-only, removed Telnet and unencrypted protocols</li>
-              <li>Ran rescan cycles to verify fixes held and no regressions were introduced</li>
-              <li><strong>Result:</strong> Significant reduction in lateral movement paths and exposed management endpoints</li>
-            </ul>
-            <div class="tags">
-              <span class="tag">Vulnerability Management</span>
-              <span class="tag">Network Hardening</span>
-              <span class="tag">Healthcare/PHI</span>
-              <span class="tag">Compliance</span>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <h3>FSLogix Profile Rescue for Azure Cloud PC</h3>
-              <span class="card-meta">Azure · FSLogix · OneDrive</span>
-            </div>
-            <p>
-              <strong>Environment:</strong> MSP client with Azure Cloud PCs<br>
-              User's Cloud PC became unusably slow due to corrupted FSLogix profile. Rebuilt profile container while preserving user data through OneDrive sync strategy.
-            </p>
-            <ul>
-              <li>Diagnosed FSLogix profile corruption causing severe performance degradation</li>
-              <li>Documented sync state, identified critical files protected by OneDrive</li>
-              <li>Rebuilt FSLogix profile container, re-synced OneDrive, verified performance restoration</li>
-              <li>No data loss, user back to full productivity within maintenance window</li>
-              <li><strong>Result:</strong> Cloud PC performance restored, documented procedure for future similar issues</li>
-            </ul>
-            <div class="tags">
-              <span class="tag">Azure</span>
-              <span class="tag">FSLogix</span>
-              <span class="tag">Troubleshooting</span>
-              <span class="tag">User Recovery</span>
-            </div>
-          </article>
-
           <article class="card">
             <div class="card-header">
               <h3>SentinelOne EDR Tuning: Liongard Nmap Detection</h3>
@@ -122,29 +110,6 @@
               <span class="tag">Docker</span>
               <span class="tag">Home Lab</span>
               <span class="tag">Troubleshooting</span>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <h3>ESXi Host & iDRAC BIOS Configuration</h3>
-              <span class="card-meta">VMware · Dell Hardware</span>
-            </div>
-            <p>
-              <strong>Environment:</strong> MSP client datacenter<br>
-              Upgraded BIOS on Dell PowerEdge servers via iDRAC and reconfigured ESXi hosts post-upgrade. Managed VM downtime coordination and rollback planning.
-            </p>
-            <ul>
-              <li>Planned maintenance window with client, documented current BIOS/firmware versions</li>
-              <li>Performed BIOS upgrades via iDRAC, verified hardware compatibility post-upgrade</li>
-              <li>Reconfigured ESXi host settings, tested VM boot and network connectivity</li>
-              <li>No data loss, minimal downtime, smooth return to service</li>
-            </ul>
-            <div class="tags">
-              <span class="tag">VMware</span>
-              <span class="tag">Dell Hardware</span>
-              <span class="tag">Firmware</span>
-              <span class="tag">Change Management</span>
             </div>
           </article>
 
