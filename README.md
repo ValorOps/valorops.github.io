@@ -140,7 +140,7 @@ Edit `assets/styles.css` at the top in the `:root` section:
 
 ## 📞 Contact
 
-- Email: dillan.r.valor@gmail.com
+- Email: dillan@valorworks.dev
 - LinkedIn: [linkedin.com/in/dillan-valor](https://linkedin.com/in/dillan-valor)
 - GitHub: [github.com/DillanValor](https://github.com/DillanValor)
 
