@@ -1,6 +1,6 @@
 # valorworks.dev
 
-Professional portfolio site for Dillan Valor - IT Engineer & Cybersecurity Specialist 
+Professional portfolio site for Dillan Valor - IT Engineer & Cybersecurity Specialist
 
 ## 🚀 Site Structure
 ```
