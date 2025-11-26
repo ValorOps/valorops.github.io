@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How I Set Up a Professional Email Address Using Zoho Mail and Cloudflare - Dillan Valor</title>
+  <meta name="description" content="A step-by-step guide on how I set up a custom email address at my own domain, including DNS configuration, MX routing, SPF, DKIM, and verification through Zoho Mail using Cloudflare DNS.">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+  <link rel="shortcut icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon-256x256.png">
+  
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    /* Blog post specific styles */
+    .blog-header {
+      background: var(--bg-primary);
+      padding: 2rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-meta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+    
+    .blog-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .blog-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+    
+    .blog-content h2 {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      font-size: 1.75rem;
+    }
+    
+    .blog-content h3 {
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+      font-size: 1.35rem;
+    }
+    
+    .blog-content p {
+      margin-bottom: 1.25rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+    
+    .blog-content ul, .blog-content ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+    
+    .blog-content li {
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    
+    .blog-content strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    .blog-content code {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      color: var(--accent-primary);
+    }
+    
+    .blog-content pre {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-content pre code {
+      background: none;
+      padding: 0;
+      color: var(--text-secondary);
+    }
+    
+    .blog-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-tag {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent-primary);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      transition: gap 0.2s ease;
+    }
+    
+    .back-link:hover {
+      gap: 0.75rem;
+    }
+    
+    .dolphins-insignia {
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 180px;
+      height: auto;
+      opacity: 0.95;
+      transition: opacity 0.3s ease;
+    }
+    
+    .dolphins-insignia:hover {
+      opacity: 1;
+    }
+    
+    header {
+      position: relative;
+    }
+    
+    @media (max-width: 768px) {
+      .dolphins-insignia {
+        width: 120px;
+        right: 1rem;
+      }
+      
+      .blog-content {
+        padding: 2rem 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="../index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../experience.html">Experience</a>
+        <a href="index.html" class="active">Blog</a>
+        <a href="../index.html#contact">Contact</a>
+      </nav>
+    </div>
+    <img src="../assets/dolphins.png" alt="Enlisted Submarine Warfare Insignia" class="dolphins-insignia">
+  </header>
+
+  <main>
+    <div class="blog-header">
+      <div class="container">
+        <a href="index.html" class="back-link">
+          ← Back to Blog
+        </a>
+        <h1 style="margin-bottom: 1rem;">How I Set Up a Professional Email Address Using Zoho Mail and Cloudflare</h1>
+        <div class="blog-meta">
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            November 26, 2025
+          </span>
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            7 min read
+          </span>
+        </div>
+        <p class="lead" style="margin: 0;">A step-by-step guide on how I set up a custom email address at my own domain, including DNS configuration, MX routing, SPF, DKIM, and verification through Zoho Mail using Cloudflare DNS.</p>
+      </div>
+    </div>
+
+    <article class="blog-content">
+      <h2>Introduction</h2>
+      <p>As I started building out my personal brand, I wanted a professional email address that matched my domain — something cleaner than a Gmail address and more aligned with the ValorWorks identity I'm developing. My goal was to set up <code>dillan@valorworks.dev</code> using the tools I already rely on: Cloudflare for DNS and Zoho Mail for the email hosting.</p>
+      
+      <p>Zoho's free plan supports custom domains, which makes it a perfect fit for small personal projects or early-stage business branding. This post walks through exactly how I set it up, start to finish.</p>
+
+      <h2>Step 1 — Creating the Zoho Mail Account</h2>
+      <p>I started by signing up for Zoho Mail and selecting their custom domain option. Zoho hides their free tier pretty well now, but it's still available. After creating the organization and selecting my domain (valorworks.dev), Zoho prompted me to add my first user.</p>
+      
+      <p>I created the user that will serve as my primary inbox:</p>
+      <p><code>dillan@valorworks.dev</code></p>
+      
+      <p>Zoho automatically added it to my organization and brought me into the email hosting dashboard.</p>
+
+      <h2>Step 2 — Adding the Required DNS Records in Cloudflare</h2>
+      <p>Because I use Cloudflare for DNS, everything needed to be configured there. Zoho provides the DNS entries required for verification and mail routing:</p>
+
+      <h3>MX Records</h3>
+      <p>These tell the internet which mail servers handle email for my domain.</p>
+      <pre><code>MX   @   mx.zoho.com   priority 10
+MX   @   mx2.zoho.com  priority 20
+MX   @   mx3.zoho.com  priority 50</code></pre>
+      <p>All MX entries must be <strong>DNS Only</strong> (no Cloudflare proxy).</p>
+
+      <h3>SPF Record (TXT)</h3>
+      <p>This prevents mail spoofing and helps deliverability.</p>
+      <pre><code>v=spf1 include:zohomail.com ~all</code></pre>
+
+      <h3>DKIM Record (TXT)</h3>
+      <p>Zoho generates a DKIM key unique to your domain. Mine was placed at:</p>
+      <p><code>zmail._domainkey.valorworks.dev</code></p>
+      <p>The value is a long cryptographic string that Zoho uses to sign outbound mail.</p>
+
+      <h3>Zoho Domain Verification (CNAME)</h3>
+      <p>Zoho provides a "zb########" CNAME entry for verifying domain ownership.</p>
+      
+      <p>Once all records were added to Cloudflare and set to <strong>DNS Only</strong>, Zoho began monitoring for propagation.</p>
+
+      <h2>Step 3 — DNS Propagation & Zoho Verification</h2>
+      <p>It takes a few minutes for DNS updates to propagate across the internet. Zoho displays the status for each record, and at first everything showed:</p>
+      <p><strong>Record not propagated</strong></p>
+      
+      <p>After 10–20 minutes, the MX, SPF, and DKIM entries flipped to <strong>Verified</strong>, confirming Cloudflare's DNS changes were live.</p>
+      
+      <p>Once verification completes, Zoho fully activates the mailbox.</p>
+
+      <h2>Step 4 — Logging Into the New Mailbox</h2>
+      <p>After the DNS mapping turned green, I went to:</p>
+      <p><code>https://mail.zoho.com</code></p>
+      <p>and logged in using the new domain email address.</p>
+      
+      <p>Zoho brought me directly to a clean inbox interface with everything working — sending, receiving, attachments, etc.</p>
+
+      <h2>Step 5 — Optional Hardening: Add DMARC</h2>
+      <p>To help with deliverability and protect the domain from spoofing, it's recommended to add a DMARC record.</p>
+      
+      <p>I created a TXT record in Cloudflare:</p>
+      <pre><code>Name: _dmarc
+Value: v=DMARC1; p=none; rua=mailto:dillan@valorworks.dev;</code></pre>
+      
+      <p>This gives me delivery reports but doesn't enforce blocking yet. Later, after confirming stable email flow, I can tighten it to <code>p=quarantine</code> or <code>p=reject</code>.</p>
+
+      <h2>Results</h2>
+      <p>By the end of the process, I had:</p>
+      <ul>
+        <li>A fully functioning business email address</li>
+        <li>SPF, DKIM, and DMARC properly configured</li>
+        <li>DNS living in Cloudflare</li>
+        <li>Email hosting running through Zoho Mail</li>
+        <li>Zero cost, zero complicated infrastructure</li>
+      </ul>
+      
+      <p>This setup is lightweight, fast, and scalable as my personal or business needs grow.</p>
+
+      <h2>Conclusion</h2>
+      <p>Setting up a professional email address doesn't require expensive hosting or complicated mail servers. With Zoho Mail's custom domain support and Cloudflare's clean DNS management, I now have a reliable and secure inbox on my own domain.</p>
+      
+      <p>If you're building your personal brand or starting a small business, this combination is one of the easiest and most affordable ways to get a professional email presence online.</p>
+
+      <div class="blog-tags">
+        <span class="blog-tag">email</span>
+        <span class="blog-tag">cloudflare</span>
+        <span class="blog-tag">zoho</span>
+        <span class="blog-tag">domain-management</span>
+        <span class="blog-tag">diy-tech</span>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorworks.dev · All rights reserved</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
