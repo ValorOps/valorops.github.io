@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Building My Home Server with Proxmox - Dillan Valor</title>
+  <meta name="description" content="I recently brought home a retired server from the office to build a personal home lab. This post documents every major step, from unboxing the hardware to configuring pfSense, fixing network routing, and deploying Docker with Portainer.">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+  <link rel="shortcut icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon-256x256.png">
+  
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    /* Blog post specific styles */
+    .blog-header {
+      background: var(--bg-primary);
+      padding: 2rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-meta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+    
+    .blog-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .blog-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+    
+    .blog-content h2 {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      font-size: 1.75rem;
+    }
+    
+    .blog-content h3 {
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+      font-size: 1.35rem;
+    }
+    
+    .blog-content p {
+      margin-bottom: 1.25rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+    
+    .blog-content ul, .blog-content ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+    
+    .blog-content li {
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    
+    .blog-content strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    .blog-content code {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      color: var(--accent-primary);
+    }
+    
+    .blog-content pre {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-content pre code {
+      background: none;
+      padding: 0;
+      color: var(--text-secondary);
+    }
+    
+    .blog-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-tag {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent-primary);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      transition: gap 0.2s ease;
+    }
+    
+    .back-link:hover {
+      gap: 0.75rem;
+    }
+    
+    .dolphins-insignia {
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 180px;
+      height: auto;
+      opacity: 0.95;
+      transition: opacity 0.3s ease;
+    }
+    
+    .dolphins-insignia:hover {
+      opacity: 1;
+    }
+    
+    header {
+      position: relative;
+    }
+    
+    @media (max-width: 768px) {
+      .dolphins-insignia {
+        width: 120px;
+        right: 1rem;
+      }
+      
+      .blog-content {
+        padding: 2rem 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="../index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../experience.html">Experience</a>
+        <a href="index.html" class="active">Blog</a>
+        <a href="../index.html#contact">Contact</a>
+      </nav>
+    </div>
+    <img src="../assets/dolphins.png" alt="Enlisted Submarine Warfare Insignia" class="dolphins-insignia">
+  </header>
+
+  <main>
+    <div class="blog-header">
+      <div class="container">
+        <a href="index.html" class="back-link">
+          ← Back to Blog
+        </a>
+        <h1 style="margin-bottom: 1rem;">Building My Home Server with Proxmox</h1>
+        <div class="blog-meta">
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            December 7, 2025
+          </span>
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            12 min read
+          </span>
+        </div>
+        <p class="lead" style="margin: 0;">I recently brought home a retired server from the office to build a personal home lab — not just for learning, but to unify my home network, strengthen my cybersecurity skills, and experiment with virtualization, containerization, and network architecture.</p>
+      </div>
+    </div>
+
+    <article class="blog-content">
+      <h2>1. Preparing the Server &amp; Accessing iDRAC</h2>
+      <p>After bringing the Dell PowerEdge server home, the first task was gaining remote access via iDRAC. The only display port it has is a VGA and to be honest I don't have any monitors that could support that. Initially, iDRAC was set with an old static IP address from the office, so I had to use the front panel to change it to DHCP. This allowed me to boot it up on my network and access it via whatever IP it got. Once inside iDRAC, I mounted the installation ISO remotely so I could install Proxmox VE without physical media.</p>
+
+      <h2>2. Installing Proxmox VE</h2>
+      <p>With the ISO mounted:</p>
+      <ul>
+        <li>Booted into the Proxmox installer</li>
+        <li>Selected ZFS (RAID) configuration</li>
+        <li>Set the management IP</li>
+        <li>Rebooted and logged into the management interface from the browser</li>
+      </ul>
+      <p>Initially, the server appeared on my home network but wasn't reachable from another subnet — an issue that would surface again later and become a major troubleshooting point.</p>
+
+      <h2>3. Installing pfSense as a VM</h2>
+      <p>Next, I spun up a pfSense VM to serve as the network gateway for all lab services.</p>
+      <ul>
+        <li>One NIC bridged to my home LAN</li>
+        <li>One NIC bridged to a Proxmox internal network</li>
+        <li>Assigned WAN = DHCP</li>
+        <li>Assigned LAN = lab network IP</li>
+      </ul>
+      <p>This created a clean separation between my home network and the lab network.</p>
+
+      <h2>4. Fixing Routing Between Home LAN and Lab LAN</h2>
+      <p>My home LAN could not reach my lab network. My ISP router (I'll get an aftermarket one eventually) does not support static routes, so traffic destined for the lab had no idea where to go.</p>
+      <p>To fix this, I manually added a static route on my Windows PC:</p>
+      <pre><code>route -p add [lab subnet] mask 255.255.255.0 [pfSense IP]</code></pre>
+      <p>Finally I could access all lab systems through pfSense. This validated the pfSense routing configuration and bypassed the ISP router limitations.</p>
+
+      <h2>5. Creating the Ubuntu Server VM</h2>
+      <p>Inside Proxmox, I created an Ubuntu Server 24.04 VM:</p>
+      <ul>
+        <li>2 vCPUs</li>
+        <li>3GB RAM</li>
+        <li>32GB virtual disk</li>
+        <li>Network: VirtIO bridged to pfSense LAN</li>
+      </ul>
+      <p>Initially, Ubuntu installed correctly, but after the first reboot, it lost network connectivity. Running <code>ip a</code> showed no IP assigned.</p>
+      <p>To fix this, I updated the netplan config:</p>
+      <pre><code>sudo nano /etc/netplan/50-cloud-init.yaml</code></pre>
+      <p>Updated the file to:</p>
+      <pre><code>network:
+  version: 2
+  ethernets:
+    ens18:
+      dhcp4: false
+      addresses:
+        - [server IP]/24
+      gateway4: [Lab gateway]
+      nameservers:
+        addresses:
+          - 1.1.1.1
+          - 8.8.8.8</code></pre>
+      <p>Applied with:</p>
+      <pre><code>sudo netplan apply</code></pre>
+      <p>Now I could ping 8.8.8.8 and access the VM from both Proxmox and SSH.</p>
+
+      <h2>6. Inside Proxmox: Fixing Display Lag (SPICE Console)</h2>
+      <p>Proxmox's noVNC console was laggy, so I switched the display type to SPICE and downloaded the <code>.vv</code> remote viewer file.</p>
+      <p>SPICE dramatically improved responsiveness and made the VM feel like a native desktop.</p>
+
+      <h2>7. Installing Docker and Portainer on the Ubuntu Server</h2>
+      <p>After updating the OS, I installed Docker:</p>
+      <pre><code>sudo apt install docker.io
+sudo systemctl enable docker
+sudo systemctl start docker</code></pre>
+      <p>Added my user to the Docker group:</p>
+      <pre><code>sudo usermod -aG docker $USER
+newgrp docker</code></pre>
+      <p>Created the Portainer volume:</p>
+      <pre><code>docker volume create portainer_data</code></pre>
+      <p>Then deployed Portainer:</p>
+      <pre><code>docker run -d \
+  -p 8000:8000 \
+  -p 9443:9443 \
+  --name portainer \
+  --restart=always \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v portainer_data:/data \
+  portainer/portainer-ce:latest</code></pre>
+      <p>Portainer opened successfully at:</p>
+      <pre><code>https://[Server IP]:9443</code></pre>
+      <p>This gives me a powerful GUI for managing all containers.</p>
+
+      <h2>8. Migrating Existing Docker Services (Uptime Kuma)</h2>
+      <p>My existing Uptime Kuma instance on Windows uses a Docker-managed volume. To migrate it:</p>
+      <p>I identified the volume location with:</p>
+      <pre><code>docker inspect uptime-kuma</code></pre>
+      <p>Exported the <code>/app/data</code> folder to a <code>.tar.gz</code>, copied it to the Ubuntu VM, and mounted it into a new container:</p>
+      <pre><code>docker run -d \
+  -p 3001:3001 \
+  -v kuma_data:/app/data \
+  louislam/uptime-kuma</code></pre>
+      <p>Once I did that, I could access my monitoring panel from the locally hosted container.</p>
+
+      <h2>9. Created a Dedicated NAS Using Debian + OpenMediaVault</h2>
+      <p>I also wanted reliable shared storage for ISOs, backups, and future media so I built a full NAS inside Proxmox using the following steps:</p>
+      
+      <h3>Installing Debian as a VM</h3>
+      <ul>
+        <li>2 vCPU</li>
+        <li>4GB RAM</li>
+        <li>A dedicated virtual disk for storage</li>
+        <li>Network interface bridged to the home LAN</li>
+      </ul>
+      <p>After OS installation, I hardened the system with:</p>
+      <pre><code>sudo apt update && sudo apt upgrade -y
+sudo apt install ssh sudo cockpit -y</code></pre>
+
+      <h3>Installing OpenMediaVault (OMV)</h3>
+      <p>OMV was installed directly into Debian using the official script:</p>
+      <pre><code>wget -O - https://github.com/OpenMediaVault-Plugin-Developers/installScript/raw/master/install | sudo bash</code></pre>
+      <p>This transformed the Debian VM into a fully managed NAS accessible at:</p>
+      <pre><code>http://&lt;debian-ip&gt;</code></pre>
+
+      <h3>Configuring OMV</h3>
+      <p>Inside OMV, I configured:</p>
+      <ul>
+        <li><strong>Storage &gt; Disks</strong> — verified that Proxmox passed the storage devices through</li>
+        <li><strong>File Systems</strong> — created and mounted an ext4 filesystem</li>
+        <li><strong>Shared Folders</strong> — created shared directories for Docker data, ISOs, backups, etc.</li>
+        <li><strong>SMB/CIFS service</strong> — enabled Windows-compatible file sharing</li>
+        <li><strong>NFS service</strong> — enabled for Linux and Proxmox integrations</li>
+      </ul>
+      <p>Finally, I mounted the NFS share on Proxmox to allow:</p>
+      <ul>
+        <li>Centralized ISO storage</li>
+        <li>VM backup storage</li>
+        <li>Container data storage</li>
+        <li>Future application data (media, databases, etc.)</li>
+      </ul>
+      <p>This NAS is now my lab's backbone storage system.</p>
+
+      <h2>10. Future Container Plans</h2>
+      <p>Now that the base environment is stable, I plan to deploy:</p>
+      <ul>
+        <li><strong>Home Assistant</strong> — full smart-home integration</li>
+        <li><strong>Move Pi-hole</strong> — DNS to here for filtering &amp; ad-blocking</li>
+        <li><strong>Nginx Proxy Manager</strong> — SSL, reverse proxying, subdomain routing</li>
+        <li><strong>Uptime Kuma</strong> — internal monitoring platform</li>
+      </ul>
+      <p>These will all run under Docker on the Ubuntu host.</p>
+
+      <h2>11. StreamDeck Integration</h2>
+      <p>Just for fun and ease of management, I added buttons on my StreamDeck macro pad to open each of the web portals for the things I'm hosting and even added custom icons. This adds a nice little touch compared to going to each IP/port number in a browser or adding them to bookmarks or the default homepage, in my opinion.</p>
+
+      <h2>Results</h2>
+      <p>I now have a fully functional home server that has its own segregated network with firewall rules, a Docker server with Portainer to have web access from my PC, as well as a home NAS as a private cloud!</p>
+
+      <h2>Conclusion</h2>
+      <p>It has been a long day of experimenting and troubleshooting and I definitely learned a lot regarding networking and firewall rules, server OS installation and tuning, resource management and so much more. It's not much but it's enough to be proud of. Not so long ago I would never think I could do things I did today. Definitely looking forward to continuing this journey of building this out and adding more to it.</p>
+
+      <div class="blog-tags">
+        <span class="blog-tag">server</span>
+        <span class="blog-tag">home lab</span>
+        <span class="blog-tag">networking</span>
+        <span class="blog-tag">proxmox</span>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorworks.dev · All rights reserved</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
