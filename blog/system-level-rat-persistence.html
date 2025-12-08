@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hunting a RAT Hidden in SYSTEM-Level Autorun Persistence - Dillan Valor</title>
+  <meta name="description" content="A multi-day investigation into a suspicious executable that kept reappearing after deletion. This post documents how I traced it to a SYSTEM-level registry persistence mechanism disguised under an Adobe folder path.">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+  <link rel="shortcut icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon-256x256.png">
+  
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    /* Blog post specific styles */
+    .blog-header {
+      background: var(--bg-primary);
+      padding: 2rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-meta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+    
+    .blog-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .blog-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+    
+    .blog-content h2 {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      font-size: 1.75rem;
+    }
+    
+    .blog-content h3 {
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+      font-size: 1.35rem;
+    }
+    
+    .blog-content p {
+      margin-bottom: 1.25rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+    
+    .blog-content ul, .blog-content ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+    
+    .blog-content li {
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    
+    .blog-content strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    .blog-content code {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      color: var(--accent-primary);
+    }
+    
+    .blog-content pre {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-content pre code {
+      background: none;
+      padding: 0;
+      color: var(--text-secondary);
+    }
+    
+    .blog-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-tag {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent-primary);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      transition: gap 0.2s ease;
+    }
+    
+    .back-link:hover {
+      gap: 0.75rem;
+    }
+    
+    .dolphins-insignia {
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 180px;
+      height: auto;
+      opacity: 0.95;
+      transition: opacity 0.3s ease;
+    }
+    
+    .dolphins-insignia:hover {
+      opacity: 1;
+    }
+    
+    header {
+      position: relative;
+    }
+    
+    .finding-box {
+      background: rgba(255, 100, 100, 0.08);
+      border: 1px solid rgba(255, 100, 100, 0.25);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+    }
+    
+    .finding-box code {
+      color: #ff6b6b;
+    }
+    
+    .checklist {
+      list-style: none;
+      padding-left: 0;
+    }
+    
+    .checklist li {
+      position: relative;
+      padding-left: 1.75rem;
+      margin-bottom: 0.6rem;
+    }
+    
+    .checklist li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+    
+    .appendix {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .appendix h2 {
+      margin-top: 0;
+    }
+    
+    details {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      margin: 1rem 0;
+    }
+    
+    details summary {
+      padding: 1rem;
+      cursor: pointer;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    
+    details summary:hover {
+      color: var(--accent-primary);
+    }
+    
+    details[open] summary {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    details > div {
+      padding: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .dolphins-insignia {
+        width: 120px;
+        right: 1rem;
+      }
+      
+      .blog-content {
+        padding: 2rem 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="../index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../experience.html">Experience</a>
+        <a href="index.html" class="active">Blog</a>
+        <a href="../index.html#contact">Contact</a>
+      </nav>
+    </div>
+    <img src="../assets/dolphins.png" alt="Enlisted Submarine Warfare Insignia" class="dolphins-insignia">
+  </header>
+
+  <main>
+    <div class="blog-header">
+      <div class="container">
+        <a href="index.html" class="back-link">
+          ← Back to Blog
+        </a>
+        <h1 style="margin-bottom: 1rem;">Hunting a RAT Hidden in SYSTEM-Level Autorun Persistence</h1>
+        <div class="blog-meta">
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            December 8, 2025
+          </span>
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            15 min read
+          </span>
+        </div>
+        <p class="lead" style="margin: 0;">A multi-day investigation into a suspicious executable that kept reappearing after deletion. This post documents how I traced it to a SYSTEM-level registry persistence mechanism disguised under an Adobe folder path.</p>
+      </div>
+    </div>
+
+    <article class="blog-content">
+      <h2>Introduction</h2>
+      <p>An alert came in reporting repeated execution of <code>Connect.exe</code> and <code>ConnectDetector.exe</code> stored under an unusual location:</p>
+      <pre><code>C:\Windows\SysWOW64\config\systemprofile\AppData\Roaming\Adobe\Connect\</code></pre>
+      
+      <p>Immediate red flags surfaced: no Adobe product installs in that directory path, the SYSTEM user profile location is extremely uncommon for legitimate applications, the files kept reappearing after deletion, the behavior resembled a RAT or remote-support tool, and our security tool classified it as "Zoho Assist" despite zero Zoho presence on the machine.</p>
+      
+      <p>The challenge was clear: the executable rebuilt itself after deletion, no installer existed, no services or scheduled tasks pointed to it, no users ever installed the legitimate software it claimed to be, and security tools identified it as "ZohoAssist" but no Zoho components were actually installed.</p>
+      
+      <p>This write-up explains how I isolated the cause, validated the findings, and identified the persistence vector.</p>
+
+      <h2>Phase 1 — Process & File System Recon</h2>
+      <p>I began with process discovery:</p>
+      <pre><code>Get-Process *connect* | Select Name, Id, Path</code></pre>
+      
+      <p>The suspicious process was running as SYSTEM with no corresponding Windows service, no MSI entry, and no scheduled task launching it. Killing the process allowed the folder to be deleted temporarily, but it kept coming back. So nothing "normal" was regenerating it.</p>
+      
+      <p>I inspected the suspicious folder contents and timestamps:</p>
+      <pre><code>Get-ChildItem "C:\Windows\SysWOW64\config\systemprofile\AppData\Roaming\Adobe\Connect" |
+    Select-Object Name, LastWriteTime, Length</code></pre>
+      
+      <p>This revealed all binaries were created on the same day months earlier with no recent modification timestamps matching modern activity. The malware had been present for months and was simply being launched, not reinstalled.</p>
+
+      <h2>Phase 2 — Hunting for Persistence</h2>
+      <p>I checked every standard persistence mechanism:</p>
+      
+      <p><strong>Scheduled Tasks:</strong> None pointed to the "Adobe\Connect" folder.</p>
+      <pre><code>Get-ScheduledTask |
+    Where-Object { $_.TaskName -match "Adobe|Connect|Zoho|Remote" } |
+    Select-Object TaskName, TaskPath, State</code></pre>
+      
+      <p><strong>Services:</strong> Nothing registered.</p>
+      <pre><code>Get-CimInstance Win32_Service |
+    Where-Object { $_.PathName -like '*Adobe\\Connect*' -or $_.PathName -like '*CRWindowsClientService*' } |
+    Select-Object Name, DisplayName, State, StartMode, PathName</code></pre>
+      
+      <p><strong>MSI Installer Logs:</strong> No installation events for Adobe Connect, ZohoAssist, or any related product.</p>
+      <pre><code>Get-EventLog -LogName Application -Source MsiInstaller -Newest 50</code></pre>
+      
+      <p><strong>Startup Folders:</strong> Empty.</p>
+      
+      <p><strong>WMI Event Subscriptions:</strong> No rogue persistence events.</p>
+      
+      <p>Everything came back clean, which intensified suspicion. At this point the question was simple: "If nothing is scheduled to run it, why does it keep coming back?"</p>
+
+      <h2>Phase 3 — Timeline & Origin Tracking</h2>
+      <p>I pulled file timestamps inside the folder. All binaries were created on the same day months earlier, and no recent modification timestamps matched modern activity. This suggested the malware or tool had been present for months and was simply being launched, not reinstalled.</p>
+      
+      <p>I looked at Windows Installer reconfiguration logs to check for MSI repair activity:</p>
+      <pre><code>Get-WinEvent -LogName Application |
+    Where-Object {
+        $_.Id -eq 1035 -and
+        $_.TimeCreated -ge (Get-Date "12/06/2025 00:00") -and
+        $_.TimeCreated -le (Get-Date "12/06/2025 01:00")
+    } |
+    Select-Object TimeCreated, Id, ProviderName, Message</code></pre>
+      
+      <p>They showed many unrelated apps being reconfigured, but not the suspicious files. So the reappearance wasn't coming from MSI repair or third-party software.</p>
+
+      <h2>Phase 4 — Breakthrough: SYSTEM Registry Run Key</h2>
+      <p>Using a broad PowerShell sweep across all user hives:</p>
+      <pre><code>Get-ItemProperty -Path 'Registry::HKEY_USERS\*\SOFTWARE\Microsoft\Windows\CurrentVersion\Run' -ErrorAction SilentlyContinue |
+    Format-List</code></pre>
+      
+      <p>I finally found it.</p>
+      
+      <div class="finding-box">
+        <p style="margin-bottom: 0.75rem;"><strong>The persistence was coming from a SYSTEM-level autorun key:</strong></p>
+        <code>HKEY_USERS\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\Run</code><br>
+        <code>HKEY_USERS\S-1-5-18\Software\Microsoft\Windows\CurrentVersion\Run</code>
+        <p style="margin-top: 1rem; margin-bottom: 0;">Both contained:</p>
+        <pre style="margin-top: 0.5rem; margin-bottom: 0;"><code>ConnectDetector = "C:\Windows\system32\config\systemprofile\AppData\Roaming\Adobe\Connect\connectdetector.exe"</code></pre>
+      </div>
+      
+      <p>Why this matters: <code>S-1-5-18</code> is the SYSTEM account, <code>.DEFAULT</code> executes before any user logs in, and this guarantees persistence without relying on user profiles. This is malware-style behavior, not normal software design.</p>
+      
+      <p>With this discovery, everything made sense. The process launched itself before any user session. Deleting the folder temporarily "fixed" it, but the autorun key simply relaunched it. Security tools flagged the behavior as remote-access activity. No installer existed because none was needed.</p>
+
+      <h2>Phase 5 — Cross-Validation</h2>
+      <p>I worked with a second AI assistant to verify the findings, specifically whether any legitimate application could create this folder, whether any known vendor tools used this executable, whether QuickBooks, drivers, or OEM utilities could be responsible, and whether any security agents could have been involved.</p>
+      
+      <p>Results confirmed: no legitimate software places Adobe Connect components in the SYSTEM profile, the MD5 hash did not match legitimate vendor builds, file naming and behavior resembled repackaged ZohoAssist components used in malicious campaigns, and nothing on the machine naturally produces these executables.</p>
+      
+      <p>Cross-validation confirmed the persistence mechanism and reinforced the conclusion: <strong>this executable is an unauthorized remote-access tool (RAT) leveraging SYSTEM autorun persistence under the disguise of an Adobe folder.</strong></p>
+
+      <h2>Eradication</h2>
+      <p>The cleanup process followed these steps:</p>
+      
+      <ul class="checklist">
+        <li>Remove the registry Run entries from both SYSTEM hives</li>
+        <li>Terminate the ConnectDetector process</li>
+        <li>Delete the Adobe\Connect folder</li>
+        <li>Validate no additional persistence (WMI, Tasks, Services)</li>
+        <li>Re-scan with security tools</li>
+        <li>Confirm no lateral movement indicators</li>
+      </ul>
+      
+      <p>First, back up the registry keys before making changes:</p>
+      <pre><code>reg export "HKU\.DEFAULT\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" C:\Temp\Run_Default_Backup.reg /y
+reg export "HKU\S-1-5-18\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" C:\Temp\Run_System_Backup.reg /y</code></pre>
+      
+      <p>Then remove the malicious autorun entries:</p>
+      <pre><code>$paths = @(
+  'Registry::HKEY_USERS\.DEFAULT\SOFTWARE\Microsoft\Windows\CurrentVersion\Run',
+  'Registry::HKEY_USERS\S-1-5-18\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
+)
+
+foreach ($p in $paths) {
+    Remove-ItemProperty -Path $p -Name 'ConnectDetector' -ErrorAction SilentlyContinue
+}</code></pre>
+      
+      <p>Kill the process and remove the folder:</p>
+      <pre><code>Stop-Process -Name Connect* -Force -ErrorAction SilentlyContinue
+Remove-Item "C:\Windows\SysWOW64\config\systemprofile\AppData\Roaming\Adobe\Connect" -Recurse -Force</code></pre>
+      
+      <p>After removal of the Run keys, the folder stopped regenerating.</p>
+
+      <h2>Conclusion</h2>
+      <p>This incident is a perfect example of how malware authors hide inside OS profile paths, SYSTEM-level autoruns make persistence nearly invisible, security alert labels ("ZohoAssist") are often based on similarity rather than actual installed software, and a process that reinstalls itself is nearly always anchored to registry persistence or WMI.</p>
+      
+      <p>It also reinforced the importance of checking every user hive, investigating timestamps, reviewing MSI activity for false trails, and cross-validating findings when behavior is non-standard.</p>
+      
+      <p>This was one of the more interesting persistence cases I've seen in a while. It blended deceptively placed files, SYSTEM-level execution, misleading vendor associations, a persistence mechanism that activates before login, and a remote-access signature disguised under an Adobe name.</p>
+      
+      <p>Had it not been investigated thoroughly, it could easily have been assumed to be a legitimate tool—especially because it didn't appear in Apps & Features, Services, or Scheduled Tasks. This is exactly why deep forensic-style troubleshooting matters.</p>
+
+      <div class="appendix">
+        <h2>Appendix: PowerShell Commands Reference</h2>
+        <p>Below is a consolidated reference of the PowerShell commands used during this investigation, organized by purpose.</p>
+        
+        <details>
+          <summary>File System Inspection</summary>
+          <div>
+            <pre><code># List all files with timestamps and sizes
+Get-ChildItem "C:\Windows\SysWOW64\config\systemprofile\AppData\Roaming\Adobe\Connect" |
+    Select-Object Name, LastWriteTime, Length
+
+# Quick view of names and timestamps only
+Get-ChildItem "C:\Windows\SysWOW64\config\systemprofile\AppData\Roaming\Adobe\Connect" |
+    Select-Object Name, LastWriteTime</code></pre>
+          </div>
+        </details>
+        
+        <details>
+          <summary>Service & Installer Checks</summary>
+          <div>
+            <pre><code># Search for related services
+Get-CimInstance Win32_Service |
+    Where-Object { $_.PathName -like '*Adobe\\Connect*' -or $_.PathName -like '*CRWindowsClientService*' } |
+    Select-Object Name, DisplayName, State, StartMode, PathName
+
+# Enumerate MSI-installed products
+Get-CimInstance Win32_Product |
+    Select-Object Name, Version |
+    Sort-Object Name
+
+# Search for "connect" in MSI products
+wmic product get name,identifyingnumber | findstr /I "connect"</code></pre>
+          </div>
+        </details>
+        
+        <details>
+          <summary>Event Log Analysis</summary>
+          <div>
+            <pre><code># Recent MSI installer events
+Get-EventLog -LogName Application -Source MsiInstaller -Newest 50
+
+# MSI events in specific time window
+Get-WinEvent -LogName Application |
+    Where-Object {
+        $_.Id -eq 1035 -and
+        $_.TimeCreated -ge (Get-Date "12/06/2025 00:00") -and
+        $_.TimeCreated -le (Get-Date "12/06/2025 01:00")
+    } |
+    Select-Object TimeCreated, Id, ProviderName, Message
+
+# Search for Adobe Connect references in logs
+Get-WinEvent -LogName Application -MaxEvents 3000 |
+    Where-Object { $_.Message -like "*Adobe\\Connect*" } |
+    Select-Object TimeCreated, Id, Message</code></pre>
+          </div>
+        </details>
+        
+        <details>
+          <summary>Scheduled Task Investigation</summary>
+          <div>
+            <pre><code># Find suspicious scheduled tasks
+Get-ScheduledTask |
+    Where-Object { $_.TaskName -match "Adobe|Connect|Zoho|Remote|QuickBooks|Intuit" } |
+    Select-Object TaskName, TaskPath, State
+
+# Get details on a specific task
+Get-ScheduledTaskInfo -TaskName "&lt;TaskNameHere&gt;"</code></pre>
+          </div>
+        </details>
+        
+        <details>
+          <summary>Process Control</summary>
+          <div>
+            <pre><code># Find running Connect processes
+Get-Process *connect* -ErrorAction SilentlyContinue |
+    Select-Object Name, Id, Path
+
+# Kill specific process by PID
+Stop-Process -Id 52460 -Force
+
+# Kill all Connect* processes
+Stop-Process -Name Connect* -Force -ErrorAction SilentlyContinue</code></pre>
+          </div>
+        </details>
+        
+        <details>
+          <summary>Registry Autorun Discovery</summary>
+          <div>
+            <pre><code># Enumerate Run keys across all user hives
+Get-ItemProperty -Path 'Registry::HKEY_USERS\*\SOFTWARE\Microsoft\Windows\CurrentVersion\Run' -ErrorAction SilentlyContinue |
+    Format-List</code></pre>
+          </div>
+        </details>
+        
+        <details>
+          <summary>Cleanup & Eradication</summary>
+          <div>
+            <pre><code># Backup registry keys before changes
+reg export "HKU\.DEFAULT\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" C:\Temp\Run_Default_Backup.reg /y
+reg export "HKU\S-1-5-18\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" C:\Temp\Run_System_Backup.reg /y
+
+# Remove malicious autorun entries
+$paths = @(
+  'Registry::HKEY_USERS\.DEFAULT\SOFTWARE\Microsoft\Windows\CurrentVersion\Run',
+  'Registry::HKEY_USERS\S-1-5-18\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
+)
+
+foreach ($p in $paths) {
+    Remove-ItemProperty -Path $p -Name 'ConnectDetector' -ErrorAction SilentlyContinue
+}
+
+# Delete the malicious folder
+Remove-Item "C:\Windows\SysWOW64\config\systemprofile\AppData\Roaming\Adobe\Connect" -Recurse -Force -ErrorAction SilentlyContinue</code></pre>
+          </div>
+        </details>
+      </div>
+
+      <div class="blog-tags">
+        <span class="blog-tag">security</span>
+        <span class="blog-tag">incident-response</span>
+        <span class="blog-tag">malware</span>
+        <span class="blog-tag">powershell</span>
+        <span class="blog-tag">forensics</span>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorworks.dev · All rights reserved</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
