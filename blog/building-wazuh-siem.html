@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Building a Wazuh SIEM in My Proxmox Homelab - Dillan Valor</title>
+  <meta name="description" content="I deployed a Wazuh all-in-one server on Ubuntu in Proxmox, then onboarded my Windows PC as an agent. Here's what worked, what broke, and how I fixed it.">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+  <link rel="shortcut icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon-256x256.png">
+  
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    /* Blog post specific styles */
+    .blog-header {
+      background: var(--bg-primary);
+      padding: 2rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-meta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+    
+    .blog-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .blog-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+    
+    .blog-content h2 {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      font-size: 1.75rem;
+    }
+    
+    .blog-content h3 {
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+      font-size: 1.35rem;
+    }
+    
+    .blog-content p {
+      margin-bottom: 1.25rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+    
+    .blog-content ul, .blog-content ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+    
+    .blog-content li {
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    
+    .blog-content strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    .blog-content code {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      color: var(--accent-primary);
+    }
+    
+    .blog-content pre {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-content pre code {
+      background: none;
+      padding: 0;
+      color: var(--text-secondary);
+    }
+    
+    .blog-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-tag {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent-primary);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      transition: gap 0.2s ease;
+    }
+    
+    .back-link:hover {
+      gap: 0.75rem;
+    }
+    
+    .dolphins-insignia {
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 180px;
+      height: auto;
+      opacity: 0.95;
+      transition: opacity 0.3s ease;
+    }
+    
+    .dolphins-insignia:hover {
+      opacity: 1;
+    }
+    
+    header {
+      position: relative;
+    }
+    
+    .capability-list {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    
+    .capability-list li {
+      margin-bottom: 0.75rem;
+    }
+    
+    .capability-list li:last-child {
+      margin-bottom: 0;
+    }
+    
+    @media (max-width: 768px) {
+      .dolphins-insignia {
+        width: 120px;
+        right: 1rem;
+      }
+      
+      .blog-content {
+        padding: 2rem 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="../index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../experience.html">Experience</a>
+        <a href="index.html" class="active">Blog</a>
+        <a href="../index.html#contact">Contact</a>
+      </nav>
+    </div>
+    <img src="../assets/dolphins.png" alt="Enlisted Submarine Warfare Insignia" class="dolphins-insignia">
+  </header>
+
+  <main>
+    <div class="blog-header">
+      <div class="container">
+        <a href="index.html" class="back-link">
+          ← Back to Blog
+        </a>
+        <h1 style="margin-bottom: 1rem;">Building a Wazuh SIEM in My Proxmox Homelab</h1>
+        <div class="blog-meta">
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            December 13, 2025
+          </span>
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            14 min read
+          </span>
+        </div>
+        <p class="lead" style="margin: 0;">I deployed a Wazuh all-in-one server on Ubuntu in Proxmox, then onboarded my Windows PC as an agent. Here's what worked, what broke, and how I fixed it.</p>
+      </div>
+    </div>
+
+    <article class="blog-content">
+      <h2>Why I'm Adding Wazuh to My Homelab</h2>
+      <p>I'm building my homelab into a professional-grade security lab, so I wanted a real SIEM-style platform that can ingest logs, detect suspicious activity, and help me learn detection engineering.</p>
+
+      <p>Wazuh is a solid fit because it can:</p>
+      <ul class="capability-list">
+        <li>Monitor Windows/Linux endpoints with agents</li>
+        <li>Collect and analyze logs (security events, auth, system changes)</li>
+        <li>Do integrity monitoring (watch files/registry for changes)</li>
+        <li>Run vulnerability detection (package/software CVEs)</li>
+        <li>Map detections to MITRE ATT&CK</li>
+        <li>Support dashboards and alerting</li>
+      </ul>
+
+      <p>This is also a stepping stone toward monitoring more than just the lab — eventually I want agents on my home network devices too.</p>
+
+      <h2>VM Build: Ubuntu Server for Wazuh</h2>
+      
+      <h3>OS Choice</h3>
+      <p>I initially started with Ubuntu 24.04.x but hit package/dpkg issues during setup. To keep the platform stable and predictable, I moved to <strong>Ubuntu 22.04.5 LTS</strong>, which is a common "safe" baseline in homelabs and enterprise environments.</p>
+
+      <h3>Proxmox VM Hardware Settings</h3>
+      <p>These settings are geared toward an all-in-one Wazuh install (Indexer + Manager + Dashboard on one VM):</p>
+      
+      <ul>
+        <li><strong>CPU:</strong> 4 vCPU</li>
+        <li><strong>RAM:</strong> 15 GB</li>
+        <li><strong>Disk:</strong> 120 GB</li>
+        <li><strong>Machine:</strong> q35</li>
+        <li><strong>BIOS:</strong> OVMF (UEFI)</li>
+        <li><strong>NIC:</strong> VirtIO on the lab bridge (e.g., vmbr1)</li>
+        <li><strong>Storage Layout (Ubuntu Installer):</strong>
+          <ul>
+            <li>Entire disk + LVM group (simple and clean)</li>
+            <li>/boot and /boot/efi partitions created automatically</li>
+            <li>Root volume on LVM</li>
+          </ul>
+        </li>
+      </ul>
+
+      <p>This gives enough headroom for OpenSearch/Wazuh Indexer memory and future growth (more agents, more logs, more retention).</p>
+
+      <h2>Installing Wazuh (All-in-One)</h2>
+      <p>Wazuh provides an installation assistant script that can deploy the full stack:</p>
+      
+      <ul>
+        <li>Wazuh Manager (agent management + analysis)</li>
+        <li>Wazuh Indexer (OpenSearch-based storage/search)</li>
+        <li>Wazuh Dashboard (web UI)</li>
+      </ul>
+
+      <p>After installation, I verified basic port listeners:</p>
+      <ul>
+        <li>Agent communications: <code>1514/tcp</code> (events)</li>
+        <li>Agent enrollment: <code>1515/tcp</code> (authd)</li>
+        <li>Dashboard: <code>443/tcp</code></li>
+      </ul>
+
+      <h2>The First Real Problem: Indexer Startup Failing (Timeout)</h2>
+      <p>After install and upgrades, the Wazuh Indexer (OpenSearch) looked like it was "starting forever" and eventually showed:</p>
+      
+      <ul>
+        <li><strong>Failed to start</strong> with result <strong>timeout</strong></li>
+        <li>Java process would start, but systemd killed it because it didn't become "ready" fast enough</li>
+      </ul>
+
+      <h3>What I Learned</h3>
+      <p>Indexer startup can be slow after upgrades, reboot, index recovery, or shard allocation. This can look like it's "hung" when it's actually doing recovery work.</p>
+
+      <h3>Fix Strategy</h3>
+      <p>The real solution is to check the indexer logs to ensure it's genuinely progressing, increase the systemd startup timeout if the service is being killed too quickly, and confirm kernel tunables (like <code>vm.max_map_count</code>) are correct for OpenSearch.</p>
+      
+      <p>Once indexer becomes stable, the rest of the stack behaves normally.</p>
+
+      <h2>Wazuh Dashboard: Admin Login + Password Reset</h2>
+      <p>After getting into the dashboard, I needed to change credentials. Wazuh ships a password tool for internal users. I tried to change the password from the portal but kept getting errors about the admin resource being reserved.</p>
+
+      <p>In order to get around this I jumped back on the terminal and ran:</p>
+      
+      <pre><code>sudo WAZUH_PATH=/usr/share/wazuh-indexer /usr/share/wazuh-indexer/plugins/opensearch-security/tools/wazuh-passwords-tool.sh --user admin --password "YourNewPasswordHere"</code></pre>
+
+      <p>After that I refreshed the terminal and the admin password was updated.</p>
+
+      <p><strong>Important note:</strong> the tool enforces password complexity:</p>
+      <ul>
+        <li>8–64 characters</li>
+        <li>must include upper + lower + number + symbol</li>
+      </ul>
+
+      <h2>Onboarding My Windows PC (Agent Install)</h2>
+      
+      <h3>Installing the Agent</h3>
+      <p>On my Windows machine, I installed the Wazuh Agent via MSI, then pointed it at my manager's IP. I verified connectivity from Windows.</p>
+
+      <h3>Version Mismatch: "Agent version must be lower or equal to manager version"</h3>
+      <p>This is a classic gotcha. The agent log showed the agent refuses to connect because the <strong>agent is newer than the manager</strong>.</p>
+
+      <p><strong>Fix:</strong> Either upgrade the server to match the agent, or install an agent version that matches the server version.</p>
+      
+      <p>Once versions match, enrollment and reporting works normally.</p>
+
+      <h2>Validating the Agent</h2>
+      <p>After restarting the agent service and refreshing Wazuh, the agent appears in the dashboard.</p>
+
+      <p>At that point, the fun starts:</p>
+      <ul>
+        <li>Wazuh begins inventorying the endpoint (syscollector)</li>
+        <li>You can see OS details, installed software, network adapters, services</li>
+        <li>Alerts populate based on rules and activity</li>
+      </ul>
+
+      <h2>What Wazuh Enables in a Homelab</h2>
+      <p>Here's what I can do now (and what I plan to do next).</p>
+
+      <h3>1) Endpoint Visibility (Inventory + Health)</h3>
+      <ul>
+        <li>System info (CPU, RAM, disk)</li>
+        <li>Installed software inventory</li>
+        <li>Running services/process monitoring</li>
+        <li>Network interface and connection context</li>
+      </ul>
+
+      <h3>2) File Integrity Monitoring (FIM)</h3>
+      <ul>
+        <li>Detect changes to sensitive paths on Windows/Linux</li>
+        <li>Catch unauthorized config changes</li>
+        <li>Monitor key folders like:
+          <ul>
+            <li>Windows: System32, startup folders, critical registry keys</li>
+            <li>Linux: /etc, SSH configs, docker compose directories</li>
+          </ul>
+        </li>
+      </ul>
+
+      <h3>3) Log Collection + Correlation</h3>
+      <ul>
+        <li>Windows Event Logs (Security, System, Application)</li>
+        <li>Authentication events</li>
+        <li>Service creation / scheduled task creation</li>
+        <li>PowerShell activity (when configured)</li>
+      </ul>
+
+      <h3>4) MITRE ATT&CK Context</h3>
+      <p>Wazuh can map detections and behaviors to MITRE techniques, which is perfect for learning TTP recognition, triage workflows, and improving detection fidelity.</p>
+
+      <h3>5) Vulnerability Detection (Host-Based)</h3>
+      <p>Wazuh can detect vulnerable packages/software on endpoints, track CVEs by installed version, and help prioritize patching in a structured way.</p>
+
+      <h2>Results</h2>
+      <p>By the end of this setup, I had a fully functional Wazuh all-in-one deployment running in my Proxmox lab and a Windows endpoint successfully enrolled and reporting.</p>
+
+      <p>Concretely, this setup delivered:</p>
+      <ul>
+        <li>A stable Wazuh server with Manager, Indexer (OpenSearch), and Dashboard running on a dedicated Ubuntu VM</li>
+        <li>Verified agent communication over the correct ports (1514 and 1515)</li>
+        <li>A Windows agent successfully enrolled and visible in the dashboard</li>
+        <li>Real-time endpoint inventory collection (OS, software, services, hardware)</li>
+        <li>Continuous log ingestion from the Windows host</li>
+        <li>A foundation for file integrity monitoring, vulnerability detection, and behavioral alerts</li>
+      </ul>
+
+      <p>Just as important as the end result was the operational understanding gained:</p>
+      <ul>
+        <li>How tightly coupled the Wazuh components are</li>
+        <li>How version mismatches between agent and manager immediately break enrollment</li>
+        <li>How resource allocation and service startup timing directly impact OpenSearch/Wazuh Indexer stability</li>
+        <li>How to read and interpret Wazuh and OpenSearch logs when the UI alone isn't helpful</li>
+      </ul>
+
+      <p>Instead of a "black box" SIEM, I now have a system I actually understand well enough to troubleshoot, tune, and expand.</p>
+
+      <h2>Conclusion</h2>
+      <p>Standing up Wazuh in a homelab is more than just installing another service — it's an exercise in real-world security operations.</p>
+
+      <p>This deployment reinforced several important lessons:</p>
+      <ul>
+        <li>SIEM platforms are resource-intensive and unforgiving of shortcuts</li>
+        <li>Version control matters just as much for security tooling as it does for applications</li>
+        <li>Logs and metrics tell the real story when services appear "stuck" or broken</li>
+        <li>A clean network design and segmentation make troubleshooting far easier</li>
+      </ul>
+
+      <p>With Wazuh now operational, my homelab has moved from "a collection of servers" to an actively monitored environment. I can observe behavior, detect changes, and reason about security events in a way that mirrors professional SOC workflows.</p>
+
+      <p>From here, the platform becomes a sandbox for testing detection logic, simulating attack techniques, tuning alerts, and eventually monitoring systems beyond the lab itself.</p>
+
+      <p>This setup isn't the end goal — it's the foundation for deeper blue-team skills, better visibility, and a more intentional approach to security engineering.</p>
+
+      <div class="blog-tags">
+        <span class="blog-tag">homelab</span>
+        <span class="blog-tag">proxmox</span>
+        <span class="blog-tag">wazuh</span>
+        <span class="blog-tag">siem</span>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorworks.dev · All rights reserved</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
