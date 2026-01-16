@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Installing Rayhunter on Orbic RC400L: A Windows User's Journey - Dillan Valor</title>
+  <meta name="description" content="A detailed guide on installing the EFF's Rayhunter IMSI catcher detector on an Orbic RC400L mobile hotspot, including troubleshooting Windows issues and the Linux VM workaround that actually works.">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+  <link rel="shortcut icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon-256x256.png">
+  
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    /* Blog post specific styles */
+    .blog-header {
+      background: var(--bg-primary);
+      padding: 2rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-meta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+    
+    .blog-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .blog-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+    
+    .blog-content h2 {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      font-size: 1.75rem;
+    }
+    
+    .blog-content h3 {
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+      font-size: 1.35rem;
+    }
+    
+    .blog-content p {
+      margin-bottom: 1.25rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+    
+    .blog-content ul, .blog-content ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+    
+    .blog-content li {
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    
+    .blog-content strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    .blog-content code {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      color: var(--accent-primary);
+    }
+    
+    .blog-content pre {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-content pre code {
+      background: none;
+      padding: 0;
+      color: var(--text-secondary);
+    }
+    
+    .blog-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .blog-tag {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent-primary);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      transition: gap 0.2s ease;
+    }
+    
+    .back-link:hover {
+      gap: 0.75rem;
+    }
+    
+    .dolphins-insignia {
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 180px;
+      height: auto;
+      opacity: 0.95;
+      transition: opacity 0.3s ease;
+    }
+    
+    .dolphins-insignia:hover {
+      opacity: 1;
+    }
+    
+    header {
+      position: relative;
+    }
+    
+    .warning-box {
+      background: rgba(255, 150, 50, 0.08);
+      border: 1px solid rgba(255, 150, 50, 0.3);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+    }
+    
+    .warning-box code {
+      color: #ffb84d;
+    }
+    
+    .success-box {
+      background: rgba(100, 255, 150, 0.08);
+      border: 1px solid rgba(100, 255, 150, 0.25);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+    }
+    
+    .capability-list {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    
+    .capability-list li {
+      margin-bottom: 0.75rem;
+    }
+    
+    .capability-list li:last-child {
+      margin-bottom: 0;
+    }
+    
+    .resources-section {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    
+    .resources-section h3 {
+      margin-top: 0;
+      font-size: 1.1rem;
+    }
+    
+    .resources-section ul {
+      margin-bottom: 0;
+    }
+    
+    @media (max-width: 768px) {
+      .dolphins-insignia {
+        width: 120px;
+        right: 1rem;
+      }
+      
+      .blog-content {
+        padding: 2rem 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="../index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../experience.html">Experience</a>
+        <a href="index.html" class="active">Blog</a>
+        <a href="../index.html#contact">Contact</a>
+      </nav>
+    </div>
+    <img src="../assets/dolphins.png" alt="Enlisted Submarine Warfare Insignia" class="dolphins-insignia">
+  </header>
+
+  <main>
+    <div class="blog-header">
+      <div class="container">
+        <a href="index.html" class="back-link">
+          ← Back to Blog
+        </a>
+        <h1 style="margin-bottom: 1rem;">Installing Rayhunter on Orbic RC400L: A Windows User's Journey</h1>
+        <div class="blog-meta">
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            January 10, 2026
+          </span>
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            14 min read
+          </span>
+        </div>
+        <p class="lead" style="margin: 0;">A detailed guide on installing the EFF's Rayhunter IMSI catcher detector on an Orbic RC400L mobile hotspot, including troubleshooting Windows issues and the Linux VM workaround that actually works.</p>
+      </div>
+    </div>
+
+    <article class="blog-content">
+      <h2>What is Rayhunter?</h2>
+      <p>Rayhunter is an open-source project by the Electronic Frontier Foundation (EFF) that transforms inexpensive mobile hotspots into IMSI catcher detectors. IMSI catchers (also known as "Stingrays" or cell-site simulators) are surveillance devices that mimic cell towers to intercept mobile device communications. With Rayhunter, everyday citizens can detect and document the use of these invasive surveillance technologies in their communities.</p>
+
+      <h2>The Device: Orbic Speed RC400L</h2>
+      <p>The Orbic RC400L is a budget-friendly LTE mobile hotspot (around $20-30) that serves as the perfect platform for Rayhunter. Once installed, the device:</p>
+      
+      <ul class="capability-list">
+        <li>Continuously monitors for potential IMSI catchers</li>
+        <li>Stores detection logs locally</li>
+        <li>Functions as a normal mobile hotspot</li>
+        <li>Operates completely standalone</li>
+      </ul>
+
+      <h2>My Installation Journey: The Windows Struggle</h2>
+      <p>Like many users, I started with the recommended network installer on Windows. Spoiler alert: it didn't go smoothly.</p>
+
+      <h3>Initial Setup</h3>
+      <p>I downloaded Rayhunter v0.9.0 for Windows x86_64 and found my Orbic's admin password (the 8-character WiFi password visible on the device screen). The documentation said it should be straightforward:</p>
+      
+      <pre><code>./installer orbic --admin-password '530d9e54'</code></pre>
+
+      <h3>The Error Wall</h3>
+      <p>Instead of success, I hit this error repeatedly:</p>
+      
+      <pre><code>Logging in and starting telnet...
+Failed to install rayhunter on the Orbic RC400L
+
+Caused by:
+    0: failed to start telnet
+    1: error sending request
+    2: client error (SendRequest)
+    3: connection closed before message completed</code></pre>
+
+      <h3>Troubleshooting Attempts</h3>
+      <p>I tried everything the documentation suggested:</p>
+
+      <p><strong>1. Enabling Telnet in the Web UI</strong></p>
+      <ul>
+        <li>Navigated to http://192.168.1.1</li>
+        <li>Went to Features → Port Filter → TELNET</li>
+        <li>Enabled telnet access</li>
+        <li>Result: Still no connection</li>
+      </ul>
+
+      <p><strong>2. Disabling the Firewall</strong></p>
+      <ul>
+        <li>Features → Firewall → Disabled</li>
+        <li>Result: Port 23 still refused connections</li>
+      </ul>
+
+      <p><strong>3. Testing Connectivity</strong></p>
+      <pre><code>Test-NetConnection -ComputerName 192.168.1.1 -Port 23
+# Result: TcpTestSucceeded : False
+
+telnet 192.168.1.1
+# Result: Could not open connection to the host, on port 23: Connect failed</code></pre>
+
+      <p>The device was pingable, but all TCP ports (22, 23, 24, 25) were closed. The network installer simply couldn't establish the telnet connection needed to install Rayhunter.</p>
+
+      <h3>The USB Installer Warning</h3>
+      <p>I briefly considered the USB installer (<code>./installer orbic-usb</code>), but the warning message was terrifying:</p>
+
+      <div class="warning-box">
+        <pre style="margin: 0;"><code>WARNING: The orbic USB installer is not recommended for most usecases.
+
+WINDOWS IS NOT FULLY SUPPORTED
+THIS MAY BRICK YOUR DEVICE
+PLEASE INSTALL FROM MACOS OR LINUX INSTEAD IF POSSIBLE</code></pre>
+      </div>
+
+      <p>That was a hard pass.</p>
+
+      <h2>The Solution: Linux VM to the Rescue</h2>
+      <p>The breakthrough came when I remembered I had a Linux VirtualBox VM. Here's what worked:</p>
+
+      <h3>Step 1: Network Configuration</h3>
+      <p>The key was configuring VirtualBox to use <strong>Bridged Adapter</strong> networking instead of NAT:</p>
+
+      <ol>
+        <li>Opened VirtualBox settings for my Linux VM</li>
+        <li>Went to Network → Adapter 1</li>
+        <li>Changed "Attached to:" from <strong>NAT</strong> to <strong>Bridged Adapter</strong></li>
+        <li>Selected my WiFi adapter from the dropdown</li>
+        <li>Started the VM</li>
+      </ol>
+
+      <h3>Step 2: Connect to Orbic WiFi</h3>
+      <p>On my Windows host machine:</p>
+      <ol>
+        <li>Connected to the Orbic's WiFi network (SSID visible on device screen)</li>
+        <li>Entered the 8-character WiFi password</li>
+      </ol>
+
+      <p>The Linux VM automatically inherited this connection through the bridged adapter.</p>
+
+      <h3>Step 3: Verify Connectivity</h3>
+      <p>In the Linux VM:</p>
+      
+      <pre><code>ping 192.168.1.1
+# Success! 0% packet loss
+
+curl http://192.168.1.1
+# Success! Got the Orbic admin page HTML</code></pre>
+
+      <h3>Step 4: Run the Installer</h3>
+      <p>Downloaded the Linux version of Rayhunter and ran:</p>
+
+      <pre><code>cd ~/Downloads/rayhunter-v0.9.0-linux-x86_64
+./installer orbic --admin-password '530d9e54'</code></pre>
+
+      <div class="success-box">
+        <p style="margin-bottom: 0.75rem;"><strong>It worked!</strong> The installer:</p>
+        <ul style="margin-bottom: 0;">
+          <li>Logged into the device successfully</li>
+          <li>Started telnet without issues</li>
+          <li>Installed all Rayhunter components</li>
+          <li>Rebooted the device</li>
+          <li>Verified the installation</li>
+        </ul>
+      </div>
+
+      <p>Total installation time: About 3-5 minutes.</p>
+
+      <h2>Verification</h2>
+      <p>After installation, I could access the Rayhunter web interface at http://192.168.1.1:8080/</p>
+
+      <p>The interface showed:</p>
+      <ul>
+        <li>✅ Rayhunter version 0.9.0 running</li>
+        <li>✅ Active recording in progress</li>
+        <li>✅ 0 warnings (green status)</li>
+        <li>✅ System information (battery, storage, memory)</li>
+        <li>✅ Configuration options</li>
+      </ul>
+
+      <p>The Orbic's screen displayed a green line at the top, indicating Rayhunter was actively monitoring for IMSI catchers.</p>
+
+      <h2>How to Use Rayhunter</h2>
+
+      <h3>Daily Operation</h3>
+      <p>Rayhunter operates <strong>completely standalone</strong>:</p>
+      <ul>
+        <li>Powers on automatically when the Orbic is turned on</li>
+        <li>Monitors continuously without any phone/computer connected</li>
+        <li>Stores recordings locally on the device</li>
+        <li>The display shows status (green = normal, red = detection)</li>
+      </ul>
+
+      <h3>Checking for Detections</h3>
+      <p>Connect your phone or computer to the Orbic's WiFi and visit http://192.168.1.1:8080/ to:</p>
+      <ul>
+        <li>View current recording status</li>
+        <li>Check for warnings (informational, low, medium, high)</li>
+        <li>Download recordings (pcap, qmdl, or zip format)</li>
+        <li>Configure analyzer settings</li>
+      </ul>
+
+      <h3>Warning Levels</h3>
+      <ul>
+        <li><strong>Informational</strong> (blue): No action needed</li>
+        <li><strong>Low</strong> (yellow): Probably nothing suspicious</li>
+        <li><strong>Medium</strong> (orange): Possible suspicious activity</li>
+        <li><strong>High</strong> (red): Strong indicator of IMSI catcher</li>
+      </ul>
+
+      <h3>Testing Your Installation</h3>
+      <p>Enable the "Test Heuristic" in Configuration settings to verify Rayhunter is working. This will trigger an alert for every cell tower you see (very noisy, so turn it off after testing).</p>
+
+      <h3>Reporting Detections</h3>
+      <p>If you detect a potential IMSI catcher, the EFF encourages you to report it:</p>
+      <ol>
+        <li>Download the recording as a zip file</li>
+        <li>Send it via Signal to: <code>ElectronicFrontierFoundation.90</code></li>
+        <li>Include: date, location, device model, Rayhunter version</li>
+      </ol>
+
+      <h2>Lessons Learned</h2>
+
+      <h3>Why Windows Failed</h3>
+      <p>The Windows network installer has known reliability issues:</p>
+      <ul>
+        <li>Difficulty establishing telnet connections to the Orbic</li>
+        <li>Connection errors even with firewall disabled</li>
+        <li>Multiple GitHub issues document these problems (#716, #693, #764)</li>
+      </ul>
+
+      <p>The EFF documentation acknowledges "Windows support in Rayhunter's installer is a work-in-progress."</p>
+
+      <h3>Why Linux VM Worked</h3>
+      <p>Using a Linux VM with bridged networking bypassed all Windows-specific issues:</p>
+      <ul>
+        <li>The Linux installer is more mature and reliable</li>
+        <li>Bridged networking allows the VM to communicate directly with the Orbic</li>
+        <li>No USB passthrough complexity needed (which is finicky in VirtualBox)</li>
+      </ul>
+
+      <h3>Alternative Solutions</h3>
+      <p>If you don't have a Linux VM, other options include:</p>
+      <ul>
+        <li><strong>Windows Subsystem for Linux (WSL)</strong> with USBIPD-WIN</li>
+        <li><strong>Linux live USB boot</strong> (no permanent installation needed)</li>
+        <li><strong>Borrow a Mac or Linux machine</strong> for the 5-minute installation</li>
+        <li><strong>USB installer</strong> (<code>orbic-usb</code>) as absolute last resort (high brick risk on Windows)</li>
+      </ul>
+
+      <h2>Conclusion</h2>
+      <p>Rayhunter is an important tool for privacy-conscious individuals and community activists who want to detect surveillance technologies in their neighborhoods. While the Windows installation process has rough edges, the Linux VM workaround makes it accessible to Windows users without requiring a full operating system change.</p>
+
+      <p>Once installed, Rayhunter operates seamlessly as a standalone device. It's like having a dashcam for cellular surveillance—continuously monitoring, recording when needed, and providing peace of mind.</p>
+
+      <div class="resources-section">
+        <h3>Resources</h3>
+        <ul>
+          <li><strong>Official Documentation:</strong> <a href="https://efforg.github.io/rayhunter/" target="_blank" rel="noopener">https://efforg.github.io/rayhunter/</a></li>
+          <li><strong>GitHub Repository:</strong> <a href="https://github.com/EFForg/rayhunter" target="_blank" rel="noopener">https://github.com/EFForg/rayhunter</a></li>
+          <li><strong>EFF Blog Post:</strong> <a href="https://www.eff.org/deeplinks/2023/08/rayhunter-new-open-source-imsi-catcher-catcher" target="_blank" rel="noopener">Rayhunter: New Open Source IMSI-Catcher Catcher</a></li>
+          <li><strong>Community Support:</strong> Mattermost channel (link in documentation)</li>
+          <li><strong>Purchase Device:</strong> Amazon or eBay (search "Orbic RC400L")</li>
+        </ul>
+      </div>
+
+      <div class="resources-section">
+        <h3>Requirements Summary</h3>
+        <p><strong>Hardware:</strong></p>
+        <ul>
+          <li>Orbic RC400L mobile hotspot (~$20-30)</li>
+          <li>SIM card (doesn't need to be activated)</li>
+          <li>Computer for installation (Windows with Linux VM, Mac, or Linux)</li>
+        </ul>
+        
+        <p><strong>Software:</strong></p>
+        <ul>
+          <li>Rayhunter release bundle (<a href="https://github.com/EFForg/rayhunter/releases" target="_blank" rel="noopener">GitHub Releases</a>)</li>
+          <li>Linux VM (if using Windows) - VirtualBox with Ubuntu works great</li>
+          <li>VirtualBox configured with Bridged Adapter networking</li>
+        </ul>
+        
+        <p><strong>Time:</strong></p>
+        <ul>
+          <li>Setup: 5-10 minutes (with VM ready)</li>
+          <li>Installation: 3-5 minutes</li>
+          <li>Learning curve: 10 minutes to understand the interface</li>
+        </ul>
+      </div>
+
+      <div class="blog-tags">
+        <span class="blog-tag">privacy</span>
+        <span class="blog-tag">surveillance</span>
+        <span class="blog-tag">rayhunter</span>
+        <span class="blog-tag">eff</span>
+        <span class="blog-tag">tutorial</span>
+        <span class="blog-tag">linux</span>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorworks.dev · All rights reserved</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
