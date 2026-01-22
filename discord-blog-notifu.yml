@@ -1,0 +1,114 @@
+name: Discord Blog Notification
+
+on:
+  push:
+    branches:
+      - main  # Change to 'master' if that's your default branch
+    paths:
+      - 'blog/*.html'
+      - '!blog/index.html'  # Ignore the blog index page
+
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit to detect new files
+
+      - name: Get new blog posts
+        id: new-posts
+        run: |
+          # Get list of added HTML files in blog/ directory (excluding index.html)
+          NEW_FILES=$(git diff --name-only --diff-filter=A HEAD~1 HEAD -- 'blog/*.html' | grep -v 'blog/index.html' || true)
+          
+          if [ -z "$NEW_FILES" ]; then
+            echo "No new blog posts detected"
+            echo "has_new_posts=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "New blog posts found:"
+          echo "$NEW_FILES"
+          echo "has_new_posts=true" >> $GITHUB_OUTPUT
+          
+          # Process the first new blog post (in case multiple are added)
+          BLOG_FILE=$(echo "$NEW_FILES" | head -n 1)
+          echo "blog_file=$BLOG_FILE" >> $GITHUB_OUTPUT
+          
+          # Extract the filename without path and extension for URL
+          BLOG_SLUG=$(basename "$BLOG_FILE" .html)
+          echo "blog_slug=$BLOG_SLUG" >> $GITHUB_OUTPUT
+
+      - name: Extract blog metadata
+        if: steps.new-posts.outputs.has_new_posts == 'true'
+        id: metadata
+        run: |
+          BLOG_FILE="${{ steps.new-posts.outputs.blog_file }}"
+          
+          # Extract title from <title> tag (remove " - Dillan Valor" suffix)
+          TITLE=$(grep -oP '(?<=<title>).*?(?=</title>)' "$BLOG_FILE" | sed 's/ - Dillan Valor$//' | head -n 1)
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+          
+          # Extract description from meta tag
+          DESCRIPTION=$(grep -oP '(?<=<meta name="description" content=").*?(?=">)' "$BLOG_FILE" | head -n 1)
+          echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
+          
+          # Extract date from the blog post (looking for the date in blog-meta)
+          DATE=$(grep -oP '(?<=</svg>\s{0,10})[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}' "$BLOG_FILE" | head -n 1)
+          echo "date=$DATE" >> $GITHUB_OUTPUT
+          
+          # Extract tags
+          TAGS=$(grep -oP '(?<=<span class="blog-tag">).*?(?=</span>)' "$BLOG_FILE" | tr '\n' ',' | sed 's/,$//' | head -c 200)
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+
+      - name: Send Discord notification
+        if: steps.new-posts.outputs.has_new_posts == 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          BLOG_TITLE: ${{ steps.metadata.outputs.title }}
+          BLOG_DESCRIPTION: ${{ steps.metadata.outputs.description }}
+          BLOG_DATE: ${{ steps.metadata.outputs.date }}
+          BLOG_TAGS: ${{ steps.metadata.outputs.tags }}
+          BLOG_SLUG: ${{ steps.new-posts.outputs.blog_slug }}
+        run: |
+          # Your site URL - update this to your actual domain
+          SITE_URL="https://valorworks.dev"
+          BLOG_URL="${SITE_URL}/blog/${BLOG_SLUG}.html"
+          
+          # Create the Discord embed payload
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "📝 New Blog Post",
+              "description": "**${BLOG_TITLE}**\n\n${BLOG_DESCRIPTION}",
+              "url": "${BLOG_URL}",
+              "color": 5814783,
+              "fields": [
+                {
+                  "name": "📅 Published",
+                  "value": "${BLOG_DATE}",
+                  "inline": true
+                },
+                {
+                  "name": "🏷️ Tags",
+                  "value": "${BLOG_TAGS}",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "valorworks.dev"
+              },
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            }]
+          }
+          EOF
+          )
+          
+          # Send to Discord
+          curl -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
+               "$DISCORD_WEBHOOK_URL"
+          
+          echo "Discord notification sent for: $BLOG_TITLE"
