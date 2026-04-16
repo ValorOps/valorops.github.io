@@ -316,7 +316,7 @@
 
       <div class="finding-box">
         <strong>Threat Status: NOT MITIGATED</strong>
-        <p style="margin-top: 0.75rem; margin-bottom: 0;">The site policy was set to Protect. SentinelOne had flagged and tracked the file since February 26 — 43 days earlier, but had no genuine reason to act on it because it downloaded, dropped files, and went dormant. No analyst had ever reviewed the alert. The endpoint showed 2 unmitigated threats.</p>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">The site policy was set to Protect. SentinelOne had flagged and tracked the file since February 26 {43 days earlier}, but had no genuine reason to act on it because it downloaded, dropped files, and went dormant. No analyst had ever reviewed the alert. The endpoint showed 2 unmitigated threats.</p>
       </div>
 
       <p>The machine was online and the threat had been sitting unactioned for over six weeks. I isolated the endpoint immediately via the S1 console before digging further.</p>
@@ -345,7 +345,7 @@
 
       <p>FoodFormula is the dropper. OneBUpdateService is the payload it installed. The two detections represent different stages of the same infection.</p>
 
-      <h2>VirusTotal — Confirming the Family</h2>
+      <h2>VirusTotal: Confirming the Family</h2>
       <p>Submitting the FoodFormula SHA256 to VirusTotal returned 14/71 detections. The popular threat label was <strong>trojan.bundler/conivus</strong> with family labels of bundler, conivus, and tedy. ReversingLabs labeled it <code>Win32.Packed.Conivus</code>. The CAPE Sandbox had previously detonated it and flagged 89 network connections and 6 dropped files.</p>
 
       <p>Notably, the Reputation detection engine in SentinelOne's policy was disabled for this site, one of the detection paths that would have flagged this file earlier was turned off. </p>
@@ -436,12 +436,12 @@ Accept: */*</code></pre>
       <div class="highlight-box">
         <h3>Infostealer Capabilities (Confirmed)</h3>
         <ul>
-          <li><strong>Windows Credential Manager access</strong> — <code>VaultSvc</code> opened directly; stored credentials in scope</li>
-          <li><strong>Browser cookie theft</strong> — <code>cookies.txt</code> written to temp via embedded libcurl; staged for exfiltration</li>
-          <li><strong>Clipboard monitoring</strong> — <code>clipsvc</code> accessed; anything copied during active infection potentially captured</li>
-          <li><strong>File and directory discovery</strong> — active filesystem recon (T1083)</li>
-          <li><strong>Video/screen capture capability</strong> — T1125 detected in sandbox</li>
-          <li><strong>Tor onion address embedded</strong> — backup C2 channel beyond Cloudflare-fronted infrastructure</li>
+          <li><strong>Windows Credential Manager access</strong> : <code>VaultSvc</code> opened directly; stored credentials in scope</li>
+          <li><strong>Browser cookie theft</strong> : <code>cookies.txt</code> written to temp via embedded libcurl; staged for exfiltration</li>
+          <li><strong>Clipboard monitoring</strong> : <code>clipsvc</code> accessed; anything copied during active infection potentially captured</li>
+          <li><strong>File and directory discovery</strong> : active filesystem recon (T1083)</li>
+          <li><strong>Video/screen capture capability</strong> : T1125 detected in sandbox</li>
+          <li><strong>Tor onion address embedded</strong> : backup C2 channel beyond Cloudflare-fronted infrastructure</li>
         </ul>
       </div>
 
@@ -449,15 +449,15 @@ Accept: */*</code></pre>
         <h3>Evasion Techniques (Confirmed)</h3>
         <ul>
           <li>Time-based evasion via <code>GetTickCount</code> + <code>Sleep</code> (sandbox outlasting)</li>
-          <li>Reflective DLL injection — <code>secur32.dll</code>, <code>sspicli.dll</code>, <code>IPHLPAPI.DLL</code> loaded from RWX memory regions</li>
+          <li>Reflective DLL injection: <code>secur32.dll</code>, <code>sspicli.dll</code>, <code>IPHLPAPI.DLL</code> loaded from RWX memory regions</li>
           <li>Cloudflare CDN fronting of C2 infrastructure (blends with legitimate HTTPS traffic)</li>
-          <li>Electron application wrapper — bundles a full Chromium-based app as cover</li>
+          <li>Electron application wrapper: bundles a full Chromium-based app as cover</li>
           <li>Fraudulent code signing certificate (INSTALLERIM LLC) for signature trust bypass</li>
-          <li>Polymorphic filename distribution — same binary, randomized numeric suffix per victim</li>
+          <li>Polymorphic filename distribution: same binary, randomized numeric suffix per victim</li>
         </ul>
       </div>
 
-      <p>The Electron wrapper deserves a note. FoodFormula drops a full working "Food Formula" application complete with Chrome .pak files, ffmpeg.dll, d3dcompiler_47.dll, and an Electron LICENSE file — into <code>AppData\Roaming\FoodFormula\</code>. From the end user's perspective, something installed. The legitimate-looking application runs while the infostealer components operate underneath it.</p>
+      <p>The Electron wrapper deserves a note. FoodFormula drops a full working "Food Formula" application complete with Chrome .pak files, ffmpeg.dll, d3dcompiler_47.dll, and an Electron LICENSE file into <code>AppData\Roaming\FoodFormula\</code>. From the end user's perspective, something installed. The legitimate-looking application runs while the infostealer components operate underneath it.</p>
 
       <p>The <code>resources.pak</code> file dropped by the installer shows entropy of 7.996 out of a theoretical maximum of 8.0 and is flagged as encrypted. Normal Electron resource packages don't hit near-maximum entropy. This file almost certainly contains additional encrypted payload or configuration data hidden inside what appears to be a standard Chromium resource.</p>
 
