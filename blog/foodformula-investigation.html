@@ -307,24 +307,24 @@
     <article class="blog-content">
 
       <h2>Introduction</h2>
-      <p>This investigation started with a SentinelOne confidence level escalation — a file that had been sitting on an endpoint as "suspicious" quietly upgraded itself to "malicious." What followed was a full-day forensic deep-dive that produced a complete picture of a well-designed infostealer campaign: time-based sandbox evasion, server-side payload gating, scheduled task persistence, credential theft, browser cookie harvesting, and an active multi-victim distribution campaign.</p>
+      <p>This investigation started with a SentinelOne confidence level escalation, a file that had been sitting on an endpoint as "suspicious" quietly upgraded itself to "malicious." What followed was a full-day forensic deep-dive that produced a complete picture of a well-designed infostealer campaign: time-based sandbox evasion, server-side payload gating, scheduled task persistence, credential theft, browser cookie harvesting, and an active multi-victim distribution campaign.</p>
 
-      <p>The most interesting part of this case isn't the malware itself — it's the 29 days of silence between initial execution and payload deployment. That gap is deliberate, documented, and explainable. This post walks through how I reconstructed it from first principles using telemetry data and sandbox detonation.</p>
+      <p>The most interesting part of this case isn't the malware itself, it's the 29 days of silence between initial execution and payload deployment. That gap is deliberate, documented, and explainable. This post walks through how I reconstructed it from first principles using telemetry data and sandbox detonation.</p>
 
       <h2>The Alert</h2>
       <p>The alert was a confidence level change notification from SentinelOne: an executable named <code>FoodFormula_552655.exe</code> had escalated from suspicious to malicious on a client workstation. Pulling up the threat detail revealed the first set of problems.</p>
 
       <div class="finding-box">
         <strong>Threat Status: NOT MITIGATED</strong>
-        <p style="margin-top: 0.75rem; margin-bottom: 0;">The site policy was set to Detect only. SentinelOne had flagged and tracked the file since February 26 — 43 days earlier — but had no authority to act on it. No analyst had ever reviewed the alert. The endpoint showed 2 unmitigated threats.</p>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">The site policy was set to Protect. SentinelOne had flagged and tracked the file since February 26 — 43 days earlier, but had no genuine reason to act on it because it downloaded, dropped files, and went dormant. No analyst had ever reviewed the alert. The endpoint showed 2 unmitigated threats.</p>
       </div>
 
-      <p>The machine was online, the policy was misconfigured, and the threat had been sitting unactioned for over six weeks. I isolated the endpoint immediately via the S1 console before digging further.</p>
+      <p>The machine was online and the threat had been sitting unactioned for over six weeks. I isolated the endpoint immediately via the S1 console before digging further.</p>
 
       <h2>Two Separate Threats</h2>
       <p>The first alert notification referenced <code>FoodFormula_552655.exe</code>, but the threat detail page I initially pulled showed a different file: <code>OneBUpdateService.exe</code>. These are two distinct threats chained together, not the same detection.</p>
 
-      <h3>Threat 1 — FoodFormula_552655.exe</h3>
+      <h3>Threat 1: FoodFormula_552655.exe</h3>
       <ul>
         <li><strong>Path:</strong> <code>C:\Users\[user]\Downloads\FoodFormula_552655.exe</code></li>
         <li><strong>SHA256:</strong> <code>b179bec73efe194bffb69eeedc8c136b5e7506a10b3589d223b1e6f8a8fbfb53</code></li>
@@ -335,7 +335,7 @@
         <li><strong>Threat indicators:</strong> 18</li>
       </ul>
 
-      <h3>Threat 2 — OneBUpdateService.exe</h3>
+      <h3>Threat 2: — OneBUpdateService.exe</h3>
       <ul>
         <li><strong>Path:</strong> <code>C:\Users\[user]\AppData\Local\OB\OneBUpdate\OneBUpdateService.exe</code></li>
         <li><strong>Classification:</strong> Malware (static detection)</li>
@@ -348,9 +348,9 @@
       <h2>VirusTotal — Confirming the Family</h2>
       <p>Submitting the FoodFormula SHA256 to VirusTotal returned 14/71 detections. The popular threat label was <strong>trojan.bundler/conivus</strong> with family labels of bundler, conivus, and tedy. ReversingLabs labeled it <code>Win32.Packed.Conivus</code>. The CAPE Sandbox had previously detonated it and flagged 89 network connections and 6 dropped files.</p>
 
-      <p>Notably, the Reputation detection engine in SentinelOne's policy was disabled for this site — one of the detection paths that would have flagged this file earlier was turned off. This, combined with the Detect-only policy, is what allowed 43 days of unactioned exposure.</p>
+      <p>Notably, the Reputation detection engine in SentinelOne's policy was disabled for this site, one of the detection paths that would have flagged this file earlier was turned off. </p>
 
-      <h2>SDL Telemetry — What Actually Happened</h2>
+      <h2>SDL Telemetry: What Actually Happened</h2>
       <p>I pulled Singularity Data Lake exports filtered by the FoodFormula storyline ID across the full date range. The resulting telemetry covered 790 events spanning March 27 through April 10, with a gap from February 26 through March 26 showing no activity.</p>
 
       <div class="stat-grid">
@@ -381,7 +381,7 @@
 
       <div class="timeline-item">
         <div class="timeline-time">Feb 26 – Mar 26 — 29 Days of Silence</div>
-        <p style="margin-bottom: 0;">No storyline activity. The dropper had staged components on disk but nothing observable ran. This is the deliberate dormancy period — explained in detail below.</p>
+        <p style="margin-bottom: 0;">No storyline activity. The dropper had staged components on disk but nothing observable ran. This is the deliberate dormancy period; explained in detail below.</p>
       </div>
 
       <div class="timeline-item">
@@ -411,7 +411,7 @@
 
       <p>But the local Sleep timer only explains how the binary evades automated sandbox analysis. The 29-day real-world gap is explained by something else entirely — the C2 protocol.</p>
 
-      <h2>The C2 Protocol — Server-Side Gating</h2>
+      <h2>The C2 Protocol: Server-Side Gating</h2>
       <p>Joe Sandbox's HTTPS proxied packet capture revealed the complete C2 handshake. This is the most forensically significant finding in the entire investigation.</p>
 
       <p>The outbound registration request from the dropper:</p>
@@ -424,9 +424,9 @@ Accept: */*</code></pre>
 
       <pre><code>dfa40a4e120e9029cbc3129a898f1c8a023ec446d83647d6f24d811c1c7a4499</code></pre>
 
-      <p>The <code>s=</code> parameter is the victim fingerprint — a unique identifier for the infected machine. The <code>d=</code> parameter is a counter that increments between calls. The 64-byte response is almost certainly an encrypted task identifier or decryption key returned by the operator.</p>
+      <p>The <code>s=</code> parameter is the victim fingerprint, a unique identifier, for the infected machine. The <code>d=</code> parameter is a counter that increments between calls. The 64-byte response is almost certainly an encrypted task identifier or decryption key returned by the operator.</p>
 
-      <p>What this means: <strong>the C2 operator controls when each victim receives its payload.</strong> The dropper checks in and waits for the server to gate delivery. The 29-day gap isn't a local timer — it's the operator deciding when to activate this particular victim. This is server-side staging, not just a local sleep call.</p>
+      <p>What this means: <strong>the C2 operator controls when each victim receives its payload.</strong> The dropper checks in and waits for the server to gate delivery. The 29-day gap isn't a local timer, it's the operator deciding when to activate this particular victim. This is server-side staging, not just a local sleep call.</p>
 
       <p>Prior submissions of the same hash to Joe Sandbox showed an earlier call with <code>d=6</code>. The production infection showed <code>d=6798437</code>. The counter increments with each check-in, and the server evaluates it before responding with a delivery instruction.</p>
 
@@ -457,11 +457,11 @@ Accept: */*</code></pre>
         </ul>
       </div>
 
-      <p>The Electron wrapper deserves a note. FoodFormula drops a full working "Food Formula" application — complete with Chrome .pak files, ffmpeg.dll, d3dcompiler_47.dll, and an Electron LICENSE file — into <code>AppData\Roaming\FoodFormula\</code>. From the end user's perspective, something installed. The legitimate-looking application runs while the infostealer components operate underneath it.</p>
+      <p>The Electron wrapper deserves a note. FoodFormula drops a full working "Food Formula" application complete with Chrome .pak files, ffmpeg.dll, d3dcompiler_47.dll, and an Electron LICENSE file — into <code>AppData\Roaming\FoodFormula\</code>. From the end user's perspective, something installed. The legitimate-looking application runs while the infostealer components operate underneath it.</p>
 
       <p>The <code>resources.pak</code> file dropped by the installer shows entropy of 7.996 out of a theoretical maximum of 8.0 and is flagged as encrypted. Normal Electron resource packages don't hit near-maximum entropy. This file almost certainly contains additional encrypted payload or configuration data hidden inside what appears to be a standard Chromium resource.</p>
 
-      <h2>The Scheduled Task — Persistence Mechanism</h2>
+      <h2>The Scheduled Task: Persistence Mechanism</h2>
       <p>The SDL scheduled task telemetry gave me the complete persistence configuration without needing physical access to the machine:</p>
 
       <table class="ioc-table">
@@ -495,10 +495,10 @@ Accept: */*</code></pre>
         </tbody>
       </table>
 
-      <p>The task fired at approximately 08:17 every morning the machine was powered on — consistent with the workday start. It continued firing after I isolated the endpoint, confirming the persistence mechanism was still live. Post-isolation, S1 Pre Execution Detection blocked two re-drop attempts (14:01 and 14:57) from <code>setup.exe</code> spawned by the task.</p>
+      <p>The task fired at approximately 08:17 every morning the machine was powered on, consistent with the workday start. It continued firing after I isolated the endpoint, confirming the persistence mechanism was still live. Post-isolation, S1 Pre Execution Detection blocked two re-drop attempts (14:01 and 14:57) from <code>setup.exe</code> spawned by the task.</p>
 
-      <h2>The Campaign — Broader Context</h2>
-      <p>Joe Sandbox's hash search returned 6 prior submissions of the same SHA256 between February 6 and March 10, 2026 — all under randomized filenames:</p>
+      <h2>The Campaign: Broader Context</h2>
+      <p>Joe Sandbox's hash search returned 6 prior submissions of the same SHA256 between February 6 and March 10, 2026. All under randomized filenames:</p>
 
       <ul>
         <li>FoodFormula_677986.exe — Feb 6</li>
@@ -509,9 +509,9 @@ Accept: */*</code></pre>
         <li>FoodFormula_499326.exe — Mar 10</li>
       </ul>
 
-      <p>The <code>KitchenCanvas</code> variant is notable — the same binary distributed under a completely different lure theme. Joe Sandbox context view also showed the C2 infrastructure associated with multiple <code>KitchenCanvas_343445.exe</code> and <code>KitchenCanvas_885406.exe</code> submissions, and the dropped <code>System.dll</code> matched samples from <code>Coessential.exe</code>, which Joe attributed to <strong>Remcos and GuLoader</strong>. This campaign shares infrastructure with known RAT distribution operations.</p>
+      <p>The <code>KitchenCanvas</code> variant is notable because it's the same binary distributed under a completely different lure theme. Joe Sandbox context view also showed the C2 infrastructure associated with multiple <code>KitchenCanvas_343445.exe</code> and <code>KitchenCanvas_885406.exe</code> submissions, and the dropped <code>System.dll</code> matched samples from <code>Coessential.exe</code>, which Joe attributed to <strong>Remcos and GuLoader</strong>. This campaign shares infrastructure with known RAT distribution operations.</p>
 
-      <p>The endpoint in this investigation was infected on Feb 26 — the same day someone else submitted the same hash to Joe Sandbox for analysis. The campaign was already being tracked while it was actively deploying.</p>
+      <p>The endpoint in this investigation was infected on Feb 26, the same day someone else submitted the same hash to Joe Sandbox for analysis. The campaign was already being tracked while it was actively deploying.</p>
 
       <h2>Indicators of Compromise</h2>
 
@@ -598,7 +598,7 @@ Accept: */*</code></pre>
       </table>
 
       <h2>Remediation</h2>
-      <p>Given the confirmed infostealer capabilities — credential manager access, browser cookie theft, clipboard monitoring, and 14 days of active beaconing before containment — clean-and-remediate was not appropriate here. The endpoint received a full wipe and reimage.</p>
+      <p>Given the confirmed infostealer capabilities, credential manager access, browser cookie theft, clipboard monitoring, and 14 days of active beaconing before containment; clean-and-remediate was not appropriate here. The endpoint received a full wipe and reimage.</p>
 
       <p>Prior to the wipe, forensic artifacts were preserved via SentinelOne Fetch Files for sandbox analysis. The scheduled task name and full configuration were documented from SDL telemetry, so remediation verification didn't require physical access to the machine beforehand.</p>
 
@@ -606,20 +606,20 @@ Accept: */*</code></pre>
 
       <h2>Lessons Learned</h2>
 
-      <p><strong>Detect-only policies are not a security posture.</strong> This machine had been compromised since February 26. The policy change to Protect wouldn't have prevented the initial infection, but it would have killed the payload the moment it tried to run on March 27. Six weeks of unreviewed alerts in Detect mode meant the C2 channel was open for over two weeks before anyone looked.</p>
+      <p><strong>Even Protect policies can miss things.</strong> This machine had been compromised since February 26. The policy didn't prevent the initial infection, but it flagged the payload the moment it tried to run on March 27. Six weeks of unreviewed alerts in Detect mode meant the C2 channel was open for over two weeks before anyone looked.</p>
 
-      <p><strong>A 29-day gap in telemetry is not evidence of inactivity.</strong> The absence of SDL events between February 26 and March 27 initially suggested the dropper did nothing. It didn't — it staged components quietly and exited. Short-lived installer processes frequently fall through EDR telemetry gaps. The absence of process events is not the same as the absence of impact.</p>
+      <p><strong>A 29-day gap in telemetry is not evidence of inactivity.</strong> The absence of SDL events between February 26 and March 27 initially suggested the dropper did nothing. It didn't. it staged components quietly and exited. Short-lived installer processes frequently fall through EDR telemetry gaps. The absence of process events is not the same as the absence of impact.</p>
 
-      <p><strong>The C2 protocol is worth documenting, not just the IOCs.</strong> Knowing the C2 IP addresses is useful for blocking. Understanding that the server gates payload delivery via a counter in the URL parameter explains the entire dormancy mystery — and tells you something important about how this campaign operates. The operator has full visibility into each victim's progression and can tune the timing per target.</p>
+      <p><strong>The C2 protocol is worth documenting, not just the IOCs.</strong> Knowing the C2 IP addresses is useful for blocking. Understanding that the server gates payload delivery via a counter in the URL parameter explains the entire dormancy mystery and tells you something important about how this campaign operates. The operator has full visibility into each victim's progression and can tune the timing per target.</p>
 
       <p><strong>Signed binaries warrant behavioral scrutiny, not trust.</strong> Both the dropper and the payload carried valid code signing certificates from publishers with no connection to the software they claimed to be. A signed binary is not a clean binary. SentinelOne's behavioral engine correctly ignored the signature and classified the runtime behavior instead.</p>
 
-      <p><strong>Storyline ID filtering is the most efficient SDL query approach for active incidents.</strong> Querying by process name returned nothing because the dropper processes were too short-lived to generate their own telemetry as source processes. The storyline filter captured everything S1 chained to the infection — including events from parent processes that wouldn't surface in name-based queries.</p>
+      <p><strong>Storyline ID filtering is the most efficient SDL query approach for active incidents.</strong> Querying by process name returned nothing because the dropper processes were too short-lived to generate their own telemetry as source processes. The storyline filter captured everything S1 chained to the infection including events from parent processes that wouldn't surface in name-based queries.</p>
 
       <h2>Conclusion</h2>
-      <p>What started as a confidence level change notification turned into a six-week retrospective on an infostealer that had been operating quietly on a managed endpoint. The 29-day dormancy was deliberate and well-engineered — a combination of local sleep-based sandbox evasion and server-side payload gating that kept the dropper invisible through automated detection windows and left a gap too large for most 14-day threat hunting lookbacks to catch.</p>
+      <p>What started as a confidence level change notification turned into a six-week retrospective on an infostealer that had been operating quietly on a managed endpoint. The 29-day dormancy was deliberate and well-engineered; a combination of local sleep-based sandbox evasion and server-side payload gating that kept the dropper invisible through automated detection windows and left a gap too large for most 14-day threat hunting lookbacks to catch.</p>
 
-      <p>The full picture only emerged by combining SDL telemetry exports, VirusTotal behavioral analysis, and Joe Sandbox detonation to reconstruct what the binary actually did — and what the C2 infrastructure was actually saying back to it. No single tool had the complete story. The forensic value came from correlating across all of them.</p>
+      <p>The full picture only emerged by combining SDL telemetry exports, VirusTotal behavioral analysis, and Joe Sandbox detonation to reconstruct what the binary actually did and what the C2 infrastructure was actually saying back to it. No single tool had the complete story. The forensic value came from correlating across all of them.</p>
 
       <p>The campaign infrastructure overlaps with known Remcos and GuLoader distribution networks and was actively pushing the same binary under multiple lure names at the time of this investigation. If you're seeing FoodFormula or KitchenCanvas executables in your telemetry, treat them as active infostealers and hunt the C2 domains immediately.</p>
 
