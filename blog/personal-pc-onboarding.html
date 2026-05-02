@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Onboarding My Personal PC Into My Own Tenant - Dillan Valor</title>
+  <meta name="description" content="A full Saturday-night walkthrough of taking my personal Win 11 Home machine and turning it into a properly managed endpoint in my ValorWorks tenant — Pro upgrade, Entra Join, Intune auto-enrollment, profile migration with Profwiz, Defender for Business onboarding, and RoboShadow coexistence.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+  <link rel="shortcut icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon-256x256.png">
+
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    .blog-header {
+      background: var(--bg-primary);
+      padding: 2rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .blog-meta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+
+    .blog-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .blog-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+
+    .blog-content h2 {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      font-size: 1.75rem;
+    }
+
+    .blog-content h3 {
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+      font-size: 1.35rem;
+    }
+
+    .blog-content p {
+      margin-bottom: 1.25rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .blog-content ul, .blog-content ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+
+    .blog-content li {
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .blog-content strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .blog-content code {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      color: var(--accent-primary);
+    }
+
+    .blog-content pre {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .blog-content pre code {
+      background: none;
+      padding: 0;
+      color: var(--text-secondary);
+    }
+
+    .blog-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .blog-tag {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent-primary);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      transition: gap 0.2s ease;
+    }
+
+    .back-link:hover {
+      gap: 0.75rem;
+    }
+
+    .dolphins-insignia {
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 180px;
+      height: auto;
+      opacity: 0.95;
+      transition: opacity 0.3s ease;
+    }
+
+    .dolphins-insignia:hover { opacity: 1; }
+
+    header { position: relative; }
+
+    .highlight-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .highlight-box h3 {
+      margin-top: 0;
+      font-size: 1.1rem;
+    }
+
+    .highlight-box ul { margin-bottom: 0; }
+
+    .gotcha-box {
+      background: rgba(255, 150, 50, 0.08);
+      border: 1px solid rgba(255, 150, 50, 0.3);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+    }
+
+    .gotcha-box strong { color: #ffb84d; }
+
+    @media (max-width: 768px) {
+      .dolphins-insignia { width: 120px; right: 1rem; }
+      .blog-content { padding: 2rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="../index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../experience.html">Experience</a>
+        <a href="index.html" class="active">Blog</a>
+        <a href="../index.html#contact">Contact</a>
+      </nav>
+    </div>
+    <img src="../assets/dolphins.png" alt="Enlisted Submarine Warfare Insignia" class="dolphins-insignia">
+  </header>
+
+  <main>
+    <div class="blog-header">
+      <div class="container">
+        <a href="index.html" class="back-link">← Back to Blog</a>
+        <h1 style="margin-bottom: 1rem;">Onboarding My Personal PC Into My Own Tenant: Intune, Defender, and RoboShadow</h1>
+        <div class="blog-meta">
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            May 2, 2026
+          </span>
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            16 min read
+          </span>
+        </div>
+        <p class="lead" style="margin: 0;">A full Saturday-night walkthrough of taking my personal Win 11 Home machine and turning it into a properly managed endpoint in my ValorWorks tenant — Pro upgrade, Entra Join, Intune auto-enrollment, profile migration, Defender for Business onboarding, and RoboShadow coexistence. Lots of small gotchas worth documenting.</p>
+      </div>
+    </div>
+
+    <article class="blog-content">
+
+      <h2>Why I Did This</h2>
+      <p>Two reasons, both honest.</p>
+
+      <p>First, I wanted a real dogfooding box. Most of the work I do at the MSP touches Intune, Conditional Access, Defender for Business, and BYOD enrollment — and the cleanest way to get faster at that work is to break things on a machine I own before I touch anything client-side. A managed personal PC inside my own ValorWorks tenant means I can write a CA policy, push a compliance baseline, test ASR rules in audit mode, and validate enrollment flows without ever having to schedule a client maintenance window.</p>
+
+      <p>Second, my personal desktop genuinely needed the security upgrade. It had Microsoft Defender Antivirus, sure, but no EDR telemetry, no compliance enforcement, and no tenant-level visibility. Anything that ran on it ran outside the radar of the tenant where most of my actual work lives. Pulling it into ValorWorks fixes that.</p>
+
+      <p>This post is the full walkthrough of how that went, including the steps where things didn't go cleanly. There were a few of those.</p>
+
+      <h2>Step 1: Win 11 Home Doesn't Cut It</h2>
+      <p>The first wall I hit was licensing. My desktop was running Windows 11 Home, and Microsoft Defender for Endpoint (and by extension Defender for Business) is supported only on Windows 10/11 Pro, Enterprise, Education, and Pro Education. Home is excluded from the supported SKU list.</p>
+
+      <p>I could have gone hunting for a cheap key on the gray market, but as someone who runs a vulnerability assessment program for a customer, using a sketchy reseller key on a machine that's about to hold tenant credentials and EDR telemetry is exactly the kind of small integrity issue I'd never let one of my clients get away with. So I bit the bullet and bought a Pro upgrade through the Microsoft Store for $99. In-place upgrade, one reboot, done in about ten minutes.</p>
+
+      <p>Pro also unlocks a stack of things I actually want for a lab box: Hyper-V, BitLocker, Group Policy Editor, Windows Sandbox, Entra Join, and the broader Intune CSP surface. Worth more than $99 just for those, honestly.</p>
+
+      <h2>Step 2: Cleaning Up Old Tenant Registrations</h2>
+      <p>Before joining the machine to ValorWorks, I needed to make sure no other tenant had a foothold on it. Running <code>dsregcmd /status</code> as admin from PowerShell showed two surprises.</p>
+
+      <p>The User State section listed <code>WorkAccountCount: 2</code> and <code>WorkplaceJoined: YES</code>. Two stale Workplace Joins from previous jobs were still on the machine — including a device certificate sitting in the TPM with a 10-year validity that another company's tenant would have been able to use to identify the machine until 2032 if I'd left it alone.</p>
+
+      <div class="gotcha-box">
+        <strong>Workplace Join vs Entra Join — these are not the same thing.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">"Add work or school account" performs a Workplace Join — the device gets <em>registered</em> with a tenant for SSO into Office apps, but the device itself is not joined and won't trigger Intune auto-enrollment. Entra Join makes the device a member of the tenant, surfaces it in the Entra device inventory, and (with the right tenant config) auto-enrolls into Intune. The UI labels for these are nearly identical and Microsoft does a poor job differentiating them.</p>
+      </div>
+
+      <p>Cleanup process for stale Workplace Joins:</p>
+
+      <ol>
+        <li><code>Settings → Accounts → Access work or school</code> → click each stale entry → <strong>Disconnect</strong></li>
+        <li>Reboot</li>
+        <li>Re-run <code>dsregcmd /status</code> and confirm <code>WorkAccountCount: 0</code> and <code>WorkplaceJoined: NO</code></li>
+      </ol>
+
+      <p>If a registration doesn't disconnect cleanly through Settings, the manual cleanup is to delete the device cert from <code>certmgr.msc</code> (current user store, look for issuer <code>MS-Organization-Access</code>), clear the related entries under <code>HKCU\Software\Microsoft\Windows NT\CurrentVersion\WorkplaceJoin</code>, and check the Workplace Join scheduled tasks under Task Scheduler. I didn't need to go that far this time, but it's good to know.</p>
+
+      <h2>Step 3: Tenant-Side Prep (Don't Skip This)</h2>
+      <p>Two tenant-side settings have to be in place <em>before</em> the Entra Join, otherwise auto-enrollment into Intune silently no-ops and you get an Entra-joined device with no MDM management:</p>
+
+      <ol>
+        <li><strong>Intune license assigned to the user account.</strong> Microsoft 365 admin center → Users → your account → Licenses and apps. ValorWorks runs on Business Premium, which includes Intune Plan 1, so the license existed at the tenant level — but it still has to be assigned to the user.</li>
+        <li><strong>MDM auto-enrollment scope.</strong> Entra admin center → search for "Mobility (MDM and MAM)" → click Microsoft Intune → set <strong>MDM user scope</strong> to <code>All</code> (or a group containing your user). Leave the three default URLs as-is. Save.</li>
+      </ol>
+
+      <p>Default state on a fresh tenant is <code>None</code> for the MDM user scope, which is the most common reason an Entra Join doesn't trigger Intune enrollment.</p>
+
+      <h2>Step 4: The Actual Entra Join</h2>
+      <p>This is the step Microsoft hides behind a small link that's easy to miss. From the desktop:</p>
+
+      <ol>
+        <li><code>Settings → Accounts → Access work or school</code> → <strong>Connect</strong></li>
+        <li>In the dialog that appears, <strong>do not type your email at the top</strong>. That field starts a Workplace Join, not an Entra Join.</li>
+        <li>Look at the bottom of the dialog for the small link: <strong>"Join this device to Microsoft Entra ID"</strong> (sometimes shown under "Alternate actions").</li>
+        <li>Enter your tenant credentials, confirm the org name, accept the reboot prompt.</li>
+        <li>After reboot, sign in with the tenant account.</li>
+      </ol>
+
+      <p>To verify it took correctly, run <code>dsregcmd /status</code> again. You're looking for:</p>
+
+      <pre><code>AzureAdJoined : YES
+DomainJoined  : NO
+TenantName    : ValorWorks
+MdmUrl        : https://...manage.microsoft.com/...</code></pre>
+
+      <p>The populated <code>MdmUrl</code> is the critical piece — that's what tells you Intune auto-enrollment fired during the join. If it's blank, the tenant-side MDM scope wasn't set when the join happened, and you'd need to either disconnect/rejoin or manually enroll through Settings.</p>
+
+      <p>Within about 15 minutes the machine showed up in the Intune admin center under Devices → All devices, marked Compliant, with the correct primary user and Intune as the management authority. Auto-enrollment worked exactly as designed.</p>
+
+      <h2>Step 5: Migrating My Existing Profile (The Headache Section)</h2>
+      <p>This is where things got interesting. My desktop had been running for a while as a personal Microsoft Account profile — all my files, app configs, browser data, and PowerShell profile were under <code>C:\Users\Dilla\</code>. Signing in fresh as the ValorWorks account would create a brand-new empty profile sitting next to the personal one. That's not what I wanted.</p>
+
+      <p>The right tool for this is <a href="https://www.forensit.com/desktop-management.html" target="_blank" rel="noopener">ForensiT User Profile Wizard (Profwiz)</a>. It rewrites the ACLs on an existing profile to a new account's SID — same files, same configs, just owned by the new identity. The freeware edition is fine for a single migration.</p>
+
+      <p>Two specific gotchas hit me along the way that are worth flagging.</p>
+
+      <h3>Gotcha #1: The "Azure ID file" Requirement</h3>
+      <p>Profwiz Freeware doesn't query Entra directly to resolve account names to SIDs. It expects a <code>ForensiTAzureID.xml</code> file sitting next to <code>Profwiz.exe</code>, and it errors out with "Azure ID file not found" if the file isn't there.</p>
+
+      <p>ForensiT publishes a PowerShell script (<code>Save-AzureADUser.ps1</code>) on their <a href="https://github.com/ForensiT/PowerShell" target="_blank" rel="noopener">GitHub</a> to generate the file. The script uses the Microsoft.Graph PowerShell module and prompts for interactive auth.</p>
+
+      <p>I ran the script and it produced an XML file. But Profwiz still threw the error. The file was technically there, but empty:</p>
+
+      <pre><code>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;?xml-stylesheet type='text/xsl' href='style.xsl'?&gt;
+&lt;ForensiTAzureID ObjectId="" Name="" DisplayName="" /&gt;</code></pre>
+
+      <p>The Microsoft.Graph module's <code>Connect-MgGraph</code> step had failed silently (likely because the admin consent prompt for the requested scopes either didn't trigger or got dismissed), and the script wrote an empty stub. The empty stub is misleading — it implies the file format is one root element with all values as attributes, when the actual schema Profwiz expects is a tenant-level root with a child <code>&lt;User&gt;</code> element containing the user's UPN, Object ID, and display name.</p>
+
+      <h3>Gotcha #2: The XML Schema Profwiz Actually Expects</h3>
+      <p>For a single-user tenant like mine, hand-crafting the XML is faster than debugging the Graph auth flow. The correct format:</p>
+
+      <pre><code>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;?xml-stylesheet type='text/xsl' href='style.xsl'?&gt;
+&lt;ForensiTAzureID ObjectId="&lt;TENANT-ID&gt;" Name="yourdomain.dev" DisplayName="YourTenant"&gt;
+  &lt;User&gt;
+    &lt;UserPrincipalName&gt;you@yourdomain.dev&lt;/UserPrincipalName&gt;
+    &lt;ObjectId&gt;&lt;USER-OBJECT-ID&gt;&lt;/ObjectId&gt;
+    &lt;DisplayName&gt;Your Name&lt;/DisplayName&gt;
+  &lt;/User&gt;
+&lt;/ForensiTAzureID&gt;</code></pre>
+
+      <p>The root element's attributes describe the <em>tenant</em> (Tenant ID, primary verified domain, tenant display name). The <code>&lt;User&gt;</code> child element contains the user's data with values as nested elements, not attributes. Both pieces of info you need are in the Entra admin center → Overview page (tenant info) and Users → your account (user info).</p>
+
+      <p>Once the XML was correct, Profwiz parsed it cleanly. The migration itself took about three minutes — the Setting Profile ACL step is the longest phase because it recurses through the entire profile tree rewriting NTFS permissions on every file.</p>
+
+      <h3>Gotcha #3: The TPM/NGC Container Error on First Sign-In</h3>
+      <p>After the migration completed and I rebooted, the first sign-in as the ValorWorks account threw a Microsoft "Device TPM problem" dialog with error code <code>-2146893813</code> (hex <code>0x8009000B</code>, which decodes to <code>NTE_BAD_KEY_STATE</code>): <em>"Key not valid for use in specified state."</em></p>
+
+      <p>This is a documented and predictable side effect of profile SID migration on Entra-joined devices that already had Windows Hello provisioned. The NGC (Next Generation Credential) container, which stores Hello PINs and biometrics and is bound to TPM keys plus the original user SID, gets orphaned by the migration. The new identity tries to use the container, sees keys provisioned for a different security context, and Windows surfaces the TPM error.</p>
+
+      <p>The dialog is alarming but it's <strong>not blocking sign-in itself</strong> — it's blocking Hello provisioning. Hitting Retry typically lets Windows self-heal by re-prompting for PIN setup against the new SID. That worked in my case. If Retry hadn't worked, the documented Microsoft remediation is to clear the Hello container manually:</p>
+
+      <pre><code>certutil.exe -deleteHelloContainer</code></pre>
+
+      <p>Then sign out and sign back in to provision Hello fresh.</p>
+
+      <p>This is worth knowing for client work. Any time you migrate a user profile to a new identity on a TPM-backed Hello-enabled machine, plan to clear the Hello container post-migration. ForensiT's docs mention it briefly, but it really should be a step in their wizard.</p>
+
+      <h2>Step 6: Onboarding to Microsoft Defender for Business</h2>
+      <p>One thing that's easy to miss with Business Premium licensing: it includes <strong>Defender for Business (MDB)</strong>, not the full <strong>Defender for Endpoint (MDE) Plan 1 or 2</strong>. MDB is the SMB-tier variant — same agent, same telemetry pipeline, same Defender XDR portal — but with a simplified policy experience and a 300-user cap. For an MSP whose clients are mostly on BP, this is exactly the product to be hands-on with.</p>
+
+      <p>The onboarding flow at <code>security.microsoft.com</code> is straightforward once the tenant is provisioned (which can take 30–60 minutes the first time you visit the Defender portal):</p>
+
+      <ol>
+        <li>Defender portal → <strong>Settings → Endpoints → Onboarding</strong></li>
+        <li>OS dropdown → Windows 10 and 11</li>
+        <li>Connectivity type → <strong>Streamlined</strong> (newer endpoint set, fewer URLs to allowlist on a firewall — this is the option you'd want for client deployments too)</li>
+        <li>Deployment method → <strong>Local Script (for up to 10 devices)</strong></li>
+        <li>Download the onboarding package zip (it contains a <code>.cmd</code> file with your tenant ID and an enrollment token baked in — don't share or commit this)</li>
+        <li>Extract somewhere writable, open <strong>Command Prompt as Administrator</strong> (not PowerShell — the script uses cmd syntax), and run the <code>WindowsDefenderATPLocalOnboardingScript.cmd</code> file</li>
+        <li>Confirm Y when it prompts</li>
+      </ol>
+
+      <p>The script writes registry keys under <code>HKLM\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection</code> and starts the <code>Sense</code> service, which is the actual Defender for Endpoint agent process (<code>MsSense.exe</code>). Verify with:</p>
+
+      <pre><code>Get-Service Sense | Select-Object Name, Status, StartType
+# Expect: Running, Automatic
+
+Get-MpComputerStatus | Select-Object AMRunningMode, AntivirusEnabled, RealTimeProtectionEnabled
+# Expect: Normal, True, True</code></pre>
+
+      <p>If <code>AMRunningMode</code> shows "Passive" or "EDR Block Mode," that means a third-party AV is installed and Defender stepped down. On a clean Pro install with no other AV, expect Normal mode.</p>
+
+      <p>Then you run the official MDB detection test from an admin command prompt — it makes a benign HTTP call that the agent recognizes as a test pattern, generating a low-severity event in the portal so you can confirm telemetry is flowing. Within ~10 minutes the device shows up in the Defender portal under Assets → Devices, and the test detection appears on the device timeline.</p>
+
+      <p>For client work the local-script approach doesn't scale. The pattern there is to use Intune's Endpoint security → Endpoint detection and response policy with the "Auto from connector" setting, which uses the Intune ↔ Defender connector to onboard devices silently across an entire group. For a single-engineer-managed personal tenant, both approaches are fine — and doing the script once is good experience to have before you set up the Intune-managed version.</p>
+
+      <h2>Step 7: Adding RoboShadow Into the Mix</h2>
+      <p>With Defender for Business handling AV/EDR, I layered <a href="https://www.roboshadow.com" target="_blank" rel="noopener">RoboShadow</a> on top for vulnerability management and attack surface visibility. I'd be doing this section a disservice if I didn't talk about RoboShadow properly, because it's one of those rare tools that genuinely punches above its weight class — and most of what it does is free.</p>
+
+      <h3>What RoboShadow Actually Is</h3>
+      <p>RoboShadow is a unified cyber platform that combines external attack surface management, internal vulnerability scanning, device posture monitoring, and (on the premium tier) automated remediation. Under the hood it's running NMAP, Shodan, and OWASP-style web vulnerability checks on the external side, plus an agent-based scanner on the internal side that inventories software, tracks CVEs, and reports on Zero Trust posture. The whole thing rolls up into a single dashboard with daily automated scans and reporting suitable for compliance evidence.</p>
+
+      <p>The thing that genuinely sets RoboShadow apart, and the reason I support what they're doing, is their free tier. They market it as the "World's Best Cyber Free Tier" and they're not exaggerating — about 90% of platform features are available at no cost, including vulnerability reporting, the agent, the LAN scanner, and external scanning. For an individual, a homelab, a small business, or even a small MSP just getting started with cyber service offerings, that's a remarkable amount of capability to put behind a free signup.</p>
+
+      <h3>The Capability Set</h3>
+      <p>Across the platform, here's what you actually get. Most of these are in the free tier; I've called out the premium-only ones explicitly.</p>
+
+      <div class="highlight-box">
+        <h3>External Attack Surface Scanning</h3>
+        <ul>
+          <li><strong>Full 65,535-port scanning</strong> against any IP or domain you own, with Shodan integration to surface what the internet already knows about your edge</li>
+          <li><strong>OWASP-aligned website vulnerability checks</strong> for common web flaws</li>
+          <li><strong>Domain enumeration</strong> to discover subdomains and backend systems associated with a primary domain — useful for finding the things you forgot you exposed</li>
+          <li><strong>Daily scheduled scans</strong> with results delivered to your inbox, so external posture is monitored continuously rather than tested once and forgotten</li>
+        </ul>
+      </div>
+
+      <div class="highlight-box">
+        <h3>Internal LAN Scanner</h3>
+        <ul>
+          <li><strong>Device discovery</strong> across your local subnet, identifying what's actually on your network (including IoT and unmanaged devices)</li>
+          <li><strong>Full vulnerability assessment</strong> of discovered devices, surfacing exploitable CVEs on switches, printers, NAS units, and any other IP-based gear that often gets ignored in vuln programs</li>
+          <li><strong>Network segmentation visibility</strong> — useful for answering "is my network actually flat or is segmentation working as intended?"</li>
+        </ul>
+      </div>
+
+      <div class="highlight-box">
+        <h3>Endpoint Agent &amp; Device Vulnerability Dashboard</h3>
+        <ul>
+          <li><strong>Lightweight Windows agent</strong> that inventories installed software and reports back to a central dashboard (free in read-only mode)</li>
+          <li><strong>Per-app and per-device CVE tracking</strong> with severity ranking and prioritization based on both the vulnerability's impact and the application's reach across your environment</li>
+          <li><strong>Prescriptive remediation guidance</strong> — the dashboard doesn't just tell you what's broken, it tells you whether to update, replace, or remove the application</li>
+        </ul>
+      </div>
+
+      <div class="highlight-box">
+        <h3>Zero Trust Device Posture</h3>
+        <ul>
+          <li><strong>Antivirus status</strong> across the estate — confirms Defender (or your AV of choice) is running, updated, and not in passive mode</li>
+          <li><strong>OS update compliance</strong> — surfaces machines behind on patches</li>
+          <li><strong>Encryption status</strong> — BitLocker / disk encryption posture per device</li>
+          <li><strong>Cyber benchmarks &amp; configuration</strong> — checks devices against hardening baselines</li>
+          <li><strong>Hardware and software inventory</strong> with patch level reporting</li>
+        </ul>
+      </div>
+
+      <div class="highlight-box">
+        <h3>Cyber Heal (Premium) — Where the Real Time Savings Live</h3>
+        <ul>
+          <li><strong>One-click and AutoFix remediation</strong> — push fixes for identified vulnerabilities directly from the dashboard, rather than manually chasing each one</li>
+          <li><strong>7,000+ application updates</strong> via the Microsoft Winget repository, plus rapid uninstall of unwanted or unsecure software</li>
+          <li><strong>Manual update support</strong> for less-common applications using your own MSI/EXE packages</li>
+          <li><strong>Firewall and anti-ransomware configuration</strong> changes pushed centrally</li>
+          <li><strong>Intune plugin</strong> for bulk operations across an entire managed environment</li>
+          <li><strong>PSA integrations</strong> — auto-log AutoPilot fails into ConnectWise, Jira, ServiceDesk Plus, etc., for tickets-as-follow-up</li>
+        </ul>
+      </div>
+
+      <h3>Why This Matters For My Use Case</h3>
+      <p>I run a quarterly vulnerability assessment program for one of our largest customers, and the bulk of that work is in two places: identifying what's vulnerable and tracking remediation through to closure. RoboShadow does the first half automatically, daily, and presents it in a format that's understandable to non-technical stakeholders. The reports are clean enough to drop into a customer-facing deliverable, which is a meaningful time savings on its own.</p>
+
+      <p>Beyond customer work, having it on my personal box gives me visibility into my own attack surface — every piece of software installed, every CVE associated with what's running, the patch posture of the OS, the state of Defender. That's hard to replicate with native Windows tooling alone, and it's a useful feedback loop for someone learning detection engineering and security operations on the side.</p>
+
+      <p>For anyone reading this who runs a homelab, freelances in IT, or works at a small MSP that's trying to start a cyber service line: their free tier is worth the 60 seconds it takes to sign up. It's the kind of platform where you discover things about your own environment that you didn't know to ask about, which is exactly what a good vulnerability tool should do.</p>
+
+      <h3>Defender + RoboShadow Coexistence</h3>
+      <p>Two agents on the same machine. The good news is that they shouldn't directly conflict — RoboShadow isn't an antivirus, so Defender doesn't drop into passive mode. They live in different layers entirely. But they do touch some of the same telemetry surfaces in ways worth being aware of, especially for client deployments.</p>
+
+      <div class="highlight-box">
+        <h3>Coexistence Notes Worth Documenting</h3>
+        <ul>
+          <li><strong>Vuln scanners look like recon to behavioral EDR.</strong> Reading sensitive registry keys, enumerating installed software, probing ports, and using WMI heavily are normal vuln-management activities. The pattern can resemble post-exploitation behavior, which can produce false-positive alerts on scanner processes.</li>
+          <li><strong>ASR rules are the friction point.</strong> Two ASR rules in particular — <em>Block process creations originating from PSExec and WMI commands</em> and <em>Block credential stealing from LSASS</em> — are the most likely to interact with vuln agent behavior. Always run ASR rules in audit mode for at least a week before enabling block mode while a vuln scanner is also running, and review the audit log against the scanner's expected behavior before flipping to block.</li>
+          <li><strong>Network protection / SmartScreen can affect call-home traffic.</strong> If your firewall is doing SSL deep inspection, the vuln agent's cloud check-in URLs need to be in the allowlist. Verify connectivity status in both portals after onboarding.</li>
+          <li><strong>Use the vendor's official exclusion list, not your own assumptions.</strong> Reputable endpoint vendors publish AV/EDR coexistence guidance with specific path/process exclusions. Use their list. If their docs don't have one, that's a flag worth raising with your account rep.</li>
+        </ul>
+      </div>
+
+      <p>Quick verification commands after both agents are installed:</p>
+
+      <pre><code># Confirm both agent services are running
+Get-Service | Where-Object { $_.DisplayName -like "*RoboShadow*" }
+
+# Check Defender's quarantine for anything related to the vuln scanner
+Get-MpThreatDetection | Where-Object { $_.Resources -like "*RoboShadow*" }
+# Should return nothing
+
+# Review Defender's exclusion list to know your baseline
+Get-MpPreference | Select-Object ExclusionPath, ExclusionProcess, ExclusionExtension</code></pre>
+
+      <p>Then check both portals for last check-in timestamps. The Defender portal should show the device active and healthy; the RoboShadow portal should show it checking in within the last few hours and surfacing whatever vulnerabilities it's already found in the software inventory.</p>
+
+      <p>On my box, the first scan turned up things I'd genuinely forgotten were installed and a couple of CVEs on apps I hadn't realized were behind on patches. That's the value proposition in a single sentence: it tells you what you didn't know about your own environment.</p>
+
+      <h2>What This Stack Actually Provides</h2>
+      <p>By the end of the night, the machine had:</p>
+
+      <ul>
+        <li><strong>Endpoint membership</strong> in my ValorWorks tenant via Entra Join, surfaced in the Entra device inventory and eligible for Conditional Access enforcement</li>
+        <li><strong>Mobile device management</strong> through Intune, ready to receive compliance policies, configuration profiles, and security baselines</li>
+        <li><strong>Behavioral EDR</strong> through Microsoft Defender for Business, with telemetry feeding into Defender XDR and integration with Advanced Hunting queries</li>
+        <li><strong>Next-generation antivirus</strong> through Microsoft Defender Antivirus in active mode, managed by tenant policy</li>
+        <li><strong>Tamper protection</strong> on the Defender agent, preventing local processes from disabling protection</li>
+        <li><strong>Vulnerability management</strong> through RoboShadow, with agent-based scanning, CVE tracking, and remediation guidance</li>
+        <li><strong>Tenant-side observability</strong> — every relevant telemetry source flows back to portals I administer, instead of running blind on a personal machine</li>
+      </ul>
+
+      <p>The bigger value, though, is that this is now a real lab. The next time I need to validate a Conditional Access policy that requires a compliant device, I can scope it to my own user, watch what happens to my own machine, and iterate without ever putting a customer at risk. The same goes for ASR rule tuning, app protection policies, baseline hardening profiles, and any other tenant-side change I'd otherwise be testing in production.</p>
+
+      <h2>Lessons Learned</h2>
+
+      <p><strong>Workplace Join and Entra Join are not the same thing, and Microsoft makes this confusing on purpose.</strong> Always run <code>dsregcmd /status</code> after any "join" action and verify <code>AzureAdJoined : YES</code>. If it says <code>NO</code> but <code>WorkplaceJoined : YES</code>, you did the wrong action.</p>
+
+      <p><strong>Auto-enrollment into Intune requires three things, all in alignment.</strong> An Intune-bearing license assigned to the user, MDM user scope set to <code>All</code> (or a group the user is in), and the device joining <em>after</em> both of those are configured. If any one of them isn't true at join time, the device joins Entra cleanly but doesn't enroll into Intune.</p>
+
+      <p><strong>Profile migration on Hello-enabled machines breaks the NGC container, and that's expected.</strong> Plan for the TPM error on first sign-in. Hit Retry first; if that doesn't work, <code>certutil -deleteHelloContainer</code> from an elevated session is the documented remediation.</p>
+
+      <p><strong>Stale Workplace Joins from previous employers are a real OPSEC issue.</strong> A device cert in your TPM with a 10-year validity, registered against a tenant you no longer work for, is dormant but exists. Clean these up before you do anything else with a personal machine.</p>
+
+      <p><strong>Vuln scanner + EDR coexistence needs validation, not assumption.</strong> Watch alert flow for at least a week before enabling ASR rules in block mode. Use vendor-published exclusion guidance, not generic broad excludes. Document what you observe — that documentation is reusable when you propose the same stack to a client.</p>
+
+      <p><strong>For a personal lab box, the local-script onboarding for MDB/MDE is the fastest path.</strong> For client deployments, use the Intune-based onboarding through the Defender connector. Doing both at least once is good experience.</p>
+
+      <h2>Conclusion</h2>
+      <p>This was one of those projects where the headline goal — "get my personal PC into Intune" — was about 20% of the actual work, and the rest was small details that compound into a real walkthrough. Win 11 Home not being supported, stale workplace registrations from old employers, the Workplace Join vs Entra Join trap, ForensiT's empty-XML stub, the TPM/NGC mismatch on first sign-in, the connectivity nuances between Defender and a vuln scanner. Each one is a small thing on its own. Taken together, they're the difference between a five-minute task and an entire evening.</p>
+
+      <p>What I have at the end of it is something I'll use almost every week going forward — a managed personal endpoint that mirrors what most of my clients run, where I can validate every tenant-side change against a real machine before it touches anything I'm responsible for in production. That's worth the late night.</p>
+
+      <p>Next on the list: writing the first compliance policy in Intune, getting BitLocker enforced through tenant policy rather than locally, and pushing ASR rules in audit mode to see what surfaces against my actual workload.</p>
+
+      <div class="blog-tags">
+        <span class="blog-tag">intune</span>
+        <span class="blog-tag">defender</span>
+        <span class="blog-tag">entra</span>
+        <span class="blog-tag">endpoint-management</span>
+        <span class="blog-tag">homelab</span>
+        <span class="blog-tag">MSP</span>
+        <span class="blog-tag">profile-migration</span>
+        <span class="blog-tag">windows-11</span>
+        <span class="blog-tag">vulnerability-management</span>
+        <span class="blog-tag">roboshadow</span>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorworks.dev · All rights reserved</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
