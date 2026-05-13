@@ -399,7 +399,7 @@ Tailscale                      100.100.100.100</code></pre>
         <li>Hashing the original password forward produced the same hex string as the one in the JWT</li>
       </ol>
 
-      <p>I made a small mistake on my first CyberChef attempt that's worth flagging because it's a common confusion. My first instinct was to paste the hash <em>into the input field</em> and run MD5 on it, expecting some kind of decode. That doesn't work, because MD5 is one-way. Running MD5 on the hash just produced another MD5 of the hash. The correct workflow is to put the candidate password as the input and MD5 as the recipe, then compare the output to the target hash. Trivial point, but I bring it up because I keep seeing this exact confusion in IT spaces and it's worth the reminder: hashing is not encryption, and there's nothing to decrypt.</p>
+      <p>I made a rooky mistake on my first CyberChef attempt that's honestly worth mentioning because it's a common confusion. My first instinct was to paste the hash <em>into the input field</em> and run MD5 on it, expecting some kind of decode. That doesn't work, because MD5 is one-way. Running MD5 on the hash just produced another MD5 of the hash. The correct workflow is to put the candidate password as the input and MD5 as the recipe, then compare the output to the target hash. Trivial point, but I bring it up because I keep seeing this exact confusion in IT spaces and it's worth the reminder: hashing is not encryption, and there's nothing to decrypt.</p>
 
       <h2>Trying to Actually Crack It</h2>
 
