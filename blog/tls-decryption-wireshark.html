@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Decrypting My Own TLS Traffic with Wireshark - Dillan Valor</title>
-  <meta name="description" content="A video claimed Wireshark could decrypt HTTPS if 'TLS key logging is enabled.' That phrasing isn't quite right, but the underlying technique is real. I built a full lab in my homelab to walk through what actually happens — and what it teaches about where TLS does and doesn't protect you.">
+  <meta name="description" content="A video claimed Wireshark could decrypt HTTPS if 'TLS key logging is enabled.' That phrasing isn't quite right, but the underlying technique is real. I built a full lab on my homelab to walk through what actually happens, what TLS does and doesn't protect, and what it takes to actually crack the credentials hidden inside.">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
@@ -19,172 +19,44 @@
       padding: 2rem 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
-
-    .blog-meta {
-      display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-bottom: 2rem;
-    }
-
-    .blog-meta span {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .blog-content {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 3rem 1.5rem;
-    }
-
-    .blog-content h2 {
-      margin-top: 2.5rem;
-      margin-bottom: 1rem;
-      color: var(--text-primary);
-      font-size: 1.75rem;
-    }
-
-    .blog-content h3 {
-      margin-top: 2rem;
-      margin-bottom: 0.75rem;
-      color: var(--text-primary);
-      font-size: 1.35rem;
-    }
-
-    .blog-content p {
-      margin-bottom: 1.25rem;
-      line-height: 1.7;
-      color: var(--text-secondary);
-    }
-
-    .blog-content ul, .blog-content ol {
-      margin-bottom: 1.5rem;
-      padding-left: 1.5rem;
-    }
-
-    .blog-content li {
-      margin-bottom: 0.5rem;
-      line-height: 1.6;
-      color: var(--text-secondary);
-    }
-
-    .blog-content strong {
-      color: var(--text-primary);
-      font-weight: 600;
-    }
-
-    .blog-content code {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 0.2rem 0.4rem;
-      border-radius: 3px;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-      color: var(--accent-primary);
-    }
-
-    .blog-content pre {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 1rem;
-      border-radius: 6px;
-      overflow-x: auto;
-      margin: 1.5rem 0;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .blog-content pre code {
-      background: none;
-      padding: 0;
-      color: var(--text-secondary);
-    }
-
-    .blog-tags {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin-top: 3rem;
-      padding-top: 2rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .blog-tag {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 0.4rem 0.8rem;
-      border-radius: 4px;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-
-    .back-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--accent-primary);
-      text-decoration: none;
-      margin-bottom: 2rem;
-      transition: gap 0.2s ease;
-    }
-
-    .back-link:hover {
-      gap: 0.75rem;
-    }
-
-    .dolphins-insignia {
-      position: absolute;
-      right: 2rem;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 180px;
-      height: auto;
-      opacity: 0.95;
-      transition: opacity 0.3s ease;
-    }
-
+    .blog-meta { display: flex; gap: 1.5rem; flex-wrap: wrap; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+    .blog-meta span { display: flex; align-items: center; gap: 0.5rem; }
+    .blog-content { max-width: 800px; margin: 0 auto; padding: 3rem 1.5rem; }
+    .blog-content h2 { margin-top: 2.5rem; margin-bottom: 1rem; color: var(--text-primary); font-size: 1.75rem; }
+    .blog-content h3 { margin-top: 2rem; margin-bottom: 0.75rem; color: var(--text-primary); font-size: 1.35rem; }
+    .blog-content p { margin-bottom: 1.25rem; line-height: 1.7; color: var(--text-secondary); }
+    .blog-content ul, .blog-content ol { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+    .blog-content li { margin-bottom: 0.5rem; line-height: 1.6; color: var(--text-secondary); }
+    .blog-content strong { color: var(--text-primary); font-weight: 600; }
+    .blog-content code { background: rgba(255, 255, 255, 0.05); padding: 0.2rem 0.4rem; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.9em; color: var(--accent-primary); }
+    .blog-content pre { background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1.5rem 0; border: 1px solid rgba(255, 255, 255, 0.1); }
+    .blog-content pre code { background: none; padding: 0; color: var(--text-secondary); }
+    .blog-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+    .blog-tag { background: rgba(255, 255, 255, 0.05); padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem; color: var(--text-secondary); }
+    .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent-primary); text-decoration: none; margin-bottom: 2rem; transition: gap 0.2s ease; }
+    .back-link:hover { gap: 0.75rem; }
+    .dolphins-insignia { position: absolute; right: 2rem; top: 50%; transform: translateY(-50%); width: 180px; height: auto; opacity: 0.95; transition: opacity 0.3s ease; }
     .dolphins-insignia:hover { opacity: 1; }
-
     header { position: relative; }
-
-    .highlight-box {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin: 1.5rem 0;
-    }
-
-    .highlight-box h3 {
-      margin-top: 0;
-      font-size: 1.1rem;
-    }
-
+    .highlight-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .highlight-box h3 { margin-top: 0; font-size: 1.1rem; }
     .highlight-box ul { margin-bottom: 0; }
-
-    .gotcha-box {
-      background: rgba(255, 150, 50, 0.08);
-      border: 1px solid rgba(255, 150, 50, 0.3);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin: 1.5rem 0;
-    }
-
+    .gotcha-box { background: rgba(255, 150, 50, 0.08); border: 1px solid rgba(255, 150, 50, 0.3); border-radius: 8px; padding: 1.25rem; margin: 1.5rem 0; }
     .gotcha-box strong { color: #ffb84d; }
-
-    .finding-box {
-      background: rgba(255, 100, 100, 0.08);
-      border: 1px solid rgba(255, 100, 100, 0.25);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin: 1.5rem 0;
-    }
-
+    .finding-box { background: rgba(255, 100, 100, 0.08); border: 1px solid rgba(255, 100, 100, 0.25); border-radius: 8px; padding: 1.25rem; margin: 1.5rem 0; }
     .finding-box strong { color: #ff6b6b; }
-
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .stat-callout { background: rgba(100, 200, 255, 0.08); border: 1px solid rgba(100, 200, 255, 0.25); border-radius: 8px; padding: 1.25rem; margin: 0; text-align: center; }
+    .stat-callout .stat-number { font-size: 1.75rem; font-weight: 700; color: var(--accent-primary); display: block; margin-bottom: 0.25rem; }
+    .stat-callout .stat-label { color: var(--text-secondary); font-size: 0.9rem; }
+    .crack-result { border-left: 3px solid; padding: 0.75rem 1rem; margin: 1rem 0; background: rgba(255, 255, 255, 0.02); border-radius: 0 6px 6px 0; }
+    .crack-result.fail { border-color: #ff6b6b; }
+    .crack-result.win { border-color: #6bff8e; background: rgba(107, 255, 142, 0.06); }
+    .crack-result .crack-label { font-family: 'Courier New', monospace; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem; }
     @media (max-width: 768px) {
       .dolphins-insignia { width: 120px; right: 1rem; }
       .blog-content { padding: 2rem 1rem; }
+      .stat-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -223,10 +95,10 @@
               <path d="M12 20h9"></path>
               <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
             </svg>
-            15 min read
+            22 min read
           </span>
         </div>
-        <p class="lead" style="margin: 0;">A video claimed Wireshark could decrypt HTTPS "if the server has TLS key logging enabled." That phrasing isn't quite right, but the underlying technique is real and worth understanding properly. I built a full lab on my homelab to walk through what actually happens — and what it teaches about where TLS does and doesn't protect you.</p>
+        <p class="lead" style="margin: 0;">A video claimed Wireshark could decrypt HTTPS "if the server has TLS key logging enabled." That phrasing isn't quite right, but the underlying technique is real and worth understanding properly. I built a full lab on my homelab to walk through what actually happens, what TLS does and doesn't protect, and what it actually takes to crack the credentials hidden inside.</p>
       </div>
     </div>
 
@@ -237,13 +109,13 @@
 
       <p>The short version: the technique works, but the description was misleading in a way that matters. The keys never travel over the network. The endpoint that has them writes them out to a local file, and Wireshark reads that file from disk to decrypt traffic it already captured. There's no key capture in transit. There's an endpoint volunteering its own session secrets through a documented debugging mechanism.</p>
 
-      <p>The lesson underneath is the part that's actually useful for an MSP or security audience: TLS protects traffic from third parties on the network path. It was never trying to protect traffic from the endpoints that are part of the conversation. If you're one of the endpoints, you have the plaintext by definition, and SSLKEYLOGFILE is just the formal API for sharing that fact with analysis tools.</p>
+      <p>What the exercise turned into was much bigger than the original question. By the end of the night I had decrypted the TLS session, pulled a JWT out of the cookie, decoded the user record inside it, extracted an MD5 password hash from that record, and run multiple GPU cracking attempts against it. The cracking arc on its own ended up being a better security lesson than the decryption that produced it.</p>
 
       <h2>How TLS Decryption with SSLKEYLOGFILE Actually Works</h2>
 
       <p>Modern TLS (1.2 and 1.3) derives session keys on both endpoints independently using Diffie-Hellman. The math is set up so that the two parties can agree on a shared secret without ever transmitting the secret itself. That property is why TLS works at all. A passive observer on the network sees the public values exchanged during the handshake but cannot compute the shared secret from them.</p>
 
-      <p>That public value exchange is the only thing on the wire. The session keys themselves stay in memory on each endpoint and never appear in any packet. Even with perfect forward secrecy in TLS 1.3, the server's long-term private key cannot be used to recover past session traffic — every session has its own ephemeral key material.</p>
+      <p>That public value exchange is the only thing on the wire. The session keys themselves stay in memory on each endpoint and never appear in any packet. Even with perfect forward secrecy in TLS 1.3, the server's long-term private key cannot be used to recover past session traffic. Every session has its own ephemeral key material.</p>
 
       <p>The SSLKEYLOGFILE environment variable is a debugging hook implemented in most modern TLS libraries (NSS, BoringSSL, OpenSSL with the right callbacks, .NET, Java with flags, and so on). When the env var is set to a file path, the TLS library writes the per-session key material it just derived to that file in NSS Key Log Format. Wireshark reads the file, matches the secrets against the encrypted records in a capture, and decrypts the application data locally.</p>
 
@@ -260,7 +132,7 @@ SERVER_TRAFFIC_SECRET_0 &lt;32-byte client random&gt; &lt;48-byte secret&gt;</co
 
       <p>The framing in the original video implied this was some kind of weakness in TLS. It isn't. Two reasons.</p>
 
-      <p>First, the entire mechanism requires endpoint cooperation. The server-side or client-side TLS library has to actively write out its own session keys to disk. There is no way for a third party on the network to extract these keys passively. If an attacker has the access required to set SSLKEYLOGFILE on a target endpoint and read the file later, they already have code execution on the box, which means they have easier paths to the same data — read browser memory, hook the HTTP library, dump credentials directly.</p>
+      <p>First, the entire mechanism requires endpoint cooperation. The server-side or client-side TLS library has to actively write out its own session keys to disk. There is no way for a third party on the network to extract these keys passively. If an attacker has the access required to set SSLKEYLOGFILE on a target endpoint and read the file later, they already have code execution on the box, which means they have easier paths to the same data: read browser memory, hook the HTTP library, dump credentials directly.</p>
 
       <p>Second, TLS was never designed to hide traffic from the endpoints participating in the conversation. The threat model is network-level eavesdroppers between the client and server. The client and the server are both inside the trust boundary by definition. SSLKEYLOGFILE just gives you, the endpoint operator, a clean way to share what you already have with an analysis tool running on the same machine.</p>
 
@@ -268,9 +140,9 @@ SERVER_TRAFFIC_SECRET_0 &lt;32-byte client random&gt; &lt;48-byte secret&gt;</co
 
       <h2>Why I Built the Lab Locally Instead of Capturing Real Traffic</h2>
 
-      <p>The simplest demo of SSLKEYLOGFILE is just setting it and browsing to any public HTTPS site. That works fine for proving the technique, but it has two problems for a write-up. The screenshots would show real traffic to a real third-party service, which is awkward both ethically and legally. And the captured content wouldn't be obviously interesting — TLS hides a lot, but a lot of what it hides is boring API calls or static assets.</p>
+      <p>The simplest demo of SSLKEYLOGFILE is just setting it and browsing to any public HTTPS site. That works fine for proving the technique, but it has two problems for a write-up. The screenshots would show real traffic to a real third-party service, which is awkward both ethically and legally. And the captured content wouldn't be obviously interesting. TLS hides a lot, but a lot of what it hides is boring API calls or static assets.</p>
 
-      <p>A self-hosted target solves both. I can plant deliberately interesting data in the responses (credentials, tokens, session cookies), capture every byte of it, and not worry about whose data I'm looking at. OWASP Juice Shop is the obvious choice because it's an intentionally-vulnerable web application that the security community already recognizes, and it generates the exact kinds of payloads that make for good screenshots — login POSTs with email and password in JSON bodies, JWT tokens in cookies, REST API calls returning user data.</p>
+      <p>A self-hosted target solves both. I can plant deliberately interesting data in the responses (credentials, tokens, session cookies), capture every byte of it, and not worry about whose data I'm looking at. OWASP Juice Shop is the obvious choice because it's an intentionally-vulnerable web application that the security community already recognizes, and it generates the exact kinds of payloads that make for good screenshots: login POSTs with email and password in JSON bodies, JWT tokens in cookies, REST API calls returning user data.</p>
 
       <p>So the lab needs four things: a backend application that produces interesting traffic, a reverse proxy that terminates TLS with a cert my workstation will trust, a way to capture the traffic on my workstation, and the SSLKEYLOGFILE side of the equation to feed Wireshark.</p>
 
@@ -294,6 +166,7 @@ SERVER_TRAFFIC_SECRET_0 &lt;32-byte client random&gt; &lt;48-byte secret&gt;</co
           <li><code>SSLKEYLOGFILE</code> set as a system environment variable pointing at <code>C:\Temp\keys.log</code></li>
           <li>Hosts file entry mapping <code>lab.local</code> to the Ubuntu VM's IP</li>
           <li>Wireshark with the keylog path configured in TLS preferences</li>
+          <li>Hashcat for the eventual cracking work, paired with an RTX 3060 and SecLists</li>
         </ul>
       </div>
 
@@ -380,7 +253,7 @@ mkcert lab.local</code></pre>
 
       <pre><code>Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "`n10.10.0.100`tlab.local"</code></pre>
 
-      <p>Verify with <code>ping lab.local</code> — should resolve to <code>10.10.0.100</code>.</p>
+      <p>Verify with <code>ping lab.local</code>. It should resolve to <code>10.10.0.100</code>.</p>
 
       <p>Then the env var, set machine-wide so it survives reboots and applies to all processes:</p>
 
@@ -410,7 +283,7 @@ InterfaceAlias IPAddress       NextHop
 Tailscale      100.82.19.125
 Tailscale                      100.100.100.100</code></pre>
 
-      <p>This is when I remembered I'm running Tailscale on my pfSense VM as a subnet router. pfSense is advertising <code>10.10.0.0/24</code> into my Tailscale mesh, so my workstation takes the WireGuard tunnel to reach the lab subnet instead of the physical LAN path. That's actually how it should be configured — Tailscale handles the routing between my devices and the lab network, and I forgot it was in the picture.</p>
+      <p>This is when I remembered I'm running Tailscale on my pfSense VM as a subnet router. pfSense is advertising <code>10.10.0.0/24</code> into my Tailscale mesh, so my workstation takes the WireGuard tunnel to reach the lab subnet instead of the physical LAN path. That's actually how it should be configured. Tailscale handles the routing between my devices and the lab network, and I forgot it was in the picture.</p>
 
       <p>Which is fun for the post, because it means there are now <em>two</em> encryption layers between my browser and Juice Shop:</p>
 
@@ -438,7 +311,7 @@ Tailscale                      100.100.100.100</code></pre>
 
       <h2>What the Decrypted Traffic Shows</h2>
 
-      <p>This is where the demo earns its weight. The traffic in Wireshark before the keylog is loaded is just TLS Application Data records — opaque ciphertext, exactly what TLS is supposed to look like to a network observer. The moment the keylog is referenced in TLS preferences, the same packets render as fully decoded HTTP/2 streams with everything visible.</p>
+      <p>This is where the demo earns its weight. The traffic in Wireshark before the keylog is loaded is just TLS Application Data records, opaque ciphertext, exactly what TLS is supposed to look like to a network observer. The moment the keylog is referenced in TLS preferences, the same packets render as fully decoded HTTP/2 streams with everything visible.</p>
 
       <p>What I could see in the follow-stream view:</p>
 
@@ -453,14 +326,14 @@ Tailscale                      100.100.100.100</code></pre>
 
       <h2>Inside the JWT</h2>
 
-      <p>The decoded payload looked like this (test account, redacted slightly):</p>
+      <p>The decoded payload from my lab account:</p>
 
       <pre><code>{
   "status": "success",
   "data": {
     "id": 24,
     "email": "dillan@valor.test",
-    "password": "&lt;32-character hex string&gt;",
+    "password": "2ce83e50df47ac7faf93bc8654d7ee88",
     "role": "customer",
     "deluxeToken": "",
     "lastLoginIp": "0.0.0.0",
@@ -474,16 +347,16 @@ Tailscale                      100.100.100.100</code></pre>
   "iat": 1778644805
 }</code></pre>
 
-      <p>Three things stand out, and they each tell a different security story.</p>
+      <p>Three things stand out immediately, and they each tell a different security story.</p>
 
       <div class="finding-box">
         <strong>Finding 1: The full user record is inside the JWT.</strong>
-        <p style="margin-top: 0.75rem; margin-bottom: 0;">The token doesn't just carry the minimum needed for authorization (subject ID, role, expiry). It carries the entire user object — including fields the client doesn't need like <code>totpSecret</code>, <code>lastLoginIp</code>, and <code>deletedAt</code>. JWTs are visible to anyone who has the token. Putting your full user table row in there leaks information that should never leave the server.</p>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">The token doesn't just carry the minimum needed for authorization (subject ID, role, expiry). It carries the entire user object including fields the client doesn't need like <code>totpSecret</code>, <code>lastLoginIp</code>, and <code>deletedAt</code>. JWTs are visible to anyone who has the token. Putting your full user table row in there leaks information that should never leave the server.</p>
       </div>
 
       <div class="finding-box">
-        <strong>Finding 2: The password hash is MD5, and it's inside the JWT.</strong>
-        <p style="margin-top: 0.75rem; margin-bottom: 0;">The <code>password</code> field is a 32-character hex string — that's MD5 (bcrypt hashes start with <code>$2a$</code> or <code>$2b$</code> and are much longer). Juice Shop is doing this on purpose for the lesson, but it's a finding I've seen in real legacy SMB applications more than once. Anyone who intercepts this JWT has not just a session token, they have the user's password hash to take offline for cracking.</p>
+        <strong>Finding 2: The password field is a hash sitting in plain sight.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">The token literally embeds the user's password hash. Even if the hashing algorithm were strong, this exposes the hash to anyone who can intercept or steal the token. Now anyone with network access (or any other way to get the JWT) can take this hash offline for cracking attempts. The hash should never have been near the client.</p>
       </div>
 
       <div class="finding-box">
@@ -491,9 +364,30 @@ Tailscale                      100.100.100.100</code></pre>
         <p style="margin-top: 0.75rem; margin-bottom: 0;">The token has an issued-at timestamp but no expiration. Per the JWT spec that means the token never expires. In practice, anyone who steals this token can use it indefinitely. No rotation, no forced re-auth, no compensating control. This is a real-world JWT design pattern I've seen ship to production.</p>
       </div>
 
+      <h2>Identifying the Hash</h2>
+
+      <p>Before trying to do anything with the hash, I needed to know what algorithm produced it. Hashes have shape, and the shape narrows down the algorithm fast.</p>
+
+      <div class="highlight-box">
+        <h3>Hash shape quick reference</h3>
+        <ul>
+          <li><strong>32 hex chars, no prefix</strong> → MD5, NTLM, or MD4 (MD5 is by far the most common)</li>
+          <li><strong>40 hex chars, no prefix</strong> → SHA-1</li>
+          <li><strong>64 hex chars, no prefix</strong> → SHA-256</li>
+          <li><strong>Starts with <code>$2a$</code>, <code>$2b$</code>, <code>$2x$</code>, or <code>$2y$</code></strong> → bcrypt (with cost factor and salt embedded)</li>
+          <li><strong>Starts with <code>$argon2</code></strong> → Argon2 (current best-practice for password storage)</li>
+          <li><strong>Starts with <code>$6$</code></strong> → SHA-512 crypt</li>
+          <li><strong>Starts with <code>$7$</code></strong> → scrypt</li>
+        </ul>
+      </div>
+
+      <p>The hash from the JWT was <code>2ce83e50df47ac7faf93bc8654d7ee88</code>. Exactly 32 hex characters, no <code>$</code> prefix, no embedded salt. That's the MD5 fingerprint. To rule out the ambiguous cases (NTLM and MD4 also produce 32 hex), context helps: this is a web application storing user passwords, NTLM is a Windows network authentication hash, MD4 hasn't been used for password storage in decades. Web app + 32 hex = MD5 with very high confidence.</p>
+
+      <p>That alone is a finding. MD5 has been considered cryptographically broken for password hashing since at least 2012. The modern recommendations are bcrypt, scrypt, or Argon2, all of which are designed specifically to be slow and computationally expensive precisely to resist brute-force attacks. Plain MD5 is the opposite of slow: it's optimized for speed, which is exactly what an attacker wants. Juice Shop uses MD5 deliberately as a lesson, but it's a finding I've seen in real legacy SMB applications more than once.</p>
+
       <h2>Verifying the Hash Chain</h2>
 
-      <p>To prove the whole chain mathematically, I dropped my actual registered password into CyberChef with MD5 as the recipe. The output matched the hash from the JWT byte for byte. That confirmed every link:</p>
+      <p>To prove the chain end-to-end before going further, I dropped my registered password into CyberChef with MD5 as the recipe. The output matched the hash from the JWT byte for byte. That confirmed every link:</p>
 
       <ol>
         <li>I typed a password into Chrome's registration form on Juice Shop</li>
@@ -505,15 +399,211 @@ Tailscale                      100.100.100.100</code></pre>
         <li>Hashing the original password forward produced the same hex string as the one in the JWT</li>
       </ol>
 
-      <p>Out of curiosity, I also pasted the hash into Crackstation. It came back "Not Found." That actually surprised me at first, but it makes sense — Crackstation only finds hashes for passwords already in its precomputed wordlists. My lab password was complex enough to dodge the lookup. That's a teaching moment by itself: <strong>strong passwords still matter even when the hashing is weak.</strong> The hash is technically crackable with a long enough hashcat run, but a random complex password resists the quick-lookup attack that gets used in most credential-stuffing operations.</p>
+      <p>I made a small mistake on my first CyberChef attempt that's worth flagging because it's a common confusion. My first instinct was to paste the hash <em>into the input field</em> and run MD5 on it, expecting some kind of decode. That doesn't work, because MD5 is one-way. Running MD5 on the hash just produced another MD5 of the hash. The correct workflow is to put the candidate password as the input and MD5 as the recipe, then compare the output to the target hash. Trivial point, but I bring it up because I keep seeing this exact confusion in IT spaces and it's worth the reminder: hashing is not encryption, and there's nothing to decrypt.</p>
 
-      <h2>One Quick Aside on CyberChef</h2>
+      <h2>Trying to Actually Crack It</h2>
 
-      <p>I made a small mistake during this part that's worth flagging because it's a common confusion. My first instinct was to paste the hash <em>into the input field</em> and run MD5 on it, expecting some kind of decode. That doesn't work, because MD5 is one-way. Running MD5 on the hash just produced another MD5 of the hash. The correct workflow is to put the candidate password as the input and MD5 as the recipe, then compare the output to the target hash. Trivial point, but I bring it up because I keep seeing this exact confusion in IT spaces and it's worth the reminder: hashing is not encryption, and there's nothing to decrypt.</p>
+      <p>The forward-hash match proved the chain works. The next question is the one a real attacker would ask: with the hash in hand, how recoverable is the original password? This is where the post got more interesting than I expected.</p>
 
-      <h2>The Detection Angle (For My MSP Brain)</h2>
+      <p>The password I'd registered with for this lab was <code>F1nDMyP@55w0rd</code>. Fourteen characters, mixed case, numbers, special character. The kind of thing most corporate password policies would happily accept and most users would think of as "strong." (To be clear: this is a one-off password created for this lab account and nothing else. I'm publishing it because the whole point of the post is to show what an attacker has to do to recover it.)</p>
 
-      <p>The reason this technique matters operationally isn't that pen testers use it — they do, but they have access by definition. The reason it matters is that some commodity infostealers abuse the exact same mechanism. If an attacker can set <code>SSLKEYLOGFILE</code> on a user's session and either read the file later or exfiltrate it, they can passively capture and decrypt that user's HTTPS traffic as long as they also have network visibility (or get the user to install a "diagnostic" tool that captures traffic locally).</p>
+      <h3>Step 1: Crackstation</h3>
+
+      <p>First stop for any hash is always a precomputed lookup. <a href="https://crackstation.net" target="_blank" rel="noopener">Crackstation</a> has indexed the hashes of every common password it could get its hands on (rockyou, breach corpora, common patterns) and serves them as instant lookups. If the password is in there, you get the plaintext in milliseconds without spending a single GPU cycle.</p>
+
+      <p>Pasted in the hash. Result:</p>
+
+      <div class="crack-result fail">
+        <div class="crack-label">Crackstation lookup</div>
+        <strong>Not Found.</strong> Hash type: Unknown.
+      </div>
+
+      <p>Good sign for the password. It's not in any of the wordlists Crackstation has precomputed. The "Unknown" hash type label is a bit misleading: it just means none of their MD5 lookups produced a hit, so they couldn't confirm the algorithm. The hash is clearly MD5 by shape, they just can't reverse-confirm by finding a known plaintext.</p>
+
+      <h3>Step 2: Hashcat Setup</h3>
+
+      <p>For anything Crackstation can't lookup, the next stop is hashcat with a real GPU. Hashcat is the industry-standard offline password cracking tool. Runs on Windows natively, uses CUDA on NVIDIA cards or HIP on AMD, and ships with hundreds of attack modes and rule sets.</p>
+
+      <p>My workstation has an RTX 3060 with 12GB VRAM and an integrated AMD Radeon as a second OpenCL device. For MD5 specifically, the 3060 should hit roughly 8–10 GH/s once optimized kernels are enabled. That's 8 to 10 billion candidate passwords per second.</p>
+
+      <p>Install was straightforward. Download the 7z from hashcat.net, extract to <code>C:\Tools\HashCat\</code>, write the target hash to a file:</p>
+
+      <pre><code>[System.IO.File]::WriteAllText("C:\Tools\hash.txt", "2ce83e50df47ac7faf93bc8654d7ee88")</code></pre>
+
+      <div class="gotcha-box">
+        <strong>PowerShell's <code>Out-File -Encoding ASCII</code> isn't actually clean.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">My first attempt to write the hash file used <code>Out-File</code>, and hashcat rejected it with <code>Token length exception</code>. The file looked correct, but PowerShell had added a UTF-8 BOM or trailing newline that hashcat counted as part of the hash, making it the wrong length. <code>[System.IO.File]::WriteAllText()</code> writes raw bytes with no BOM and no trailing newline. Always use that for hashcat inputs on Windows.</p>
+      </div>
+
+      <p>For the wordlist, I grabbed <a href="https://github.com/danielmiessler/SecLists" target="_blank" rel="noopener">SecLists</a> from GitHub. The classic starting wordlist is <code>rockyou.txt</code> at <code>SecLists/Passwords/Leaked-Databases/rockyou.txt.tar.gz</code>. 14,344,391 passwords leaked from the 2009 RockYou breach. It's been the standard cracking benchmark for over fifteen years because it represents real human password choices at scale.</p>
+
+      <h3>Step 3: Straight Wordlist Attack</h3>
+
+      <p>The simplest attack. Try every password in rockyou.txt directly, no transformations, see if mine is one of them.</p>
+
+      <pre><code>.\hashcat.exe -m 0 -a 0 C:\Tools\hash.txt `
+  C:\Tools\SecLists\Passwords\Leaked-Databases\rockyou.txt</code></pre>
+
+      <p>Flags: <code>-m 0</code> = MD5 hash mode, <code>-a 0</code> = dictionary attack.</p>
+
+      <div class="crack-result fail">
+        <div class="crack-label">rockyou.txt straight wordlist · 6 seconds runtime</div>
+        <strong>Status: Exhausted.</strong> 14,344,384 candidates tried, 0/1 recovered.
+      </div>
+
+      <p>Six seconds to chew through all 14 million leaked passwords, zero matches. My password isn't in rockyou. Not surprising. The base form would have to be a real concatenated phrase to match, and rockyou is mostly single words and common phrases.</p>
+
+      <h3>Step 4: Wordlist + Rules</h3>
+
+      <p>Rules are hashcat's force multiplier. A rule is a small transformation (capitalize first letter, append a number, swap a character) that gets applied to every word in the wordlist. With a rule file containing 64 transformations, every word in rockyou becomes 64 candidates. With 99,000 transformations, every word becomes 99,000 candidates.</p>
+
+      <p>The classic starting rule set is <code>best64.rule</code>. In hashcat 7.x it's been renamed to <code>best66.rule</code> with two additional transformations. Lives at <code>rules\best66.rule</code> inside the hashcat directory.</p>
+
+      <p>I also added <code>-O</code> for optimized kernels (5–10x faster on MD5, caps password length at 31 characters which is irrelevant here):</p>
+
+      <pre><code>.\hashcat.exe -m 0 -a 0 -O C:\Tools\hash.txt `
+  C:\Tools\SecLists\Passwords\Leaked-Databases\rockyou.txt `
+  -r rules\best66.rule</code></pre>
+
+      <div class="crack-result fail">
+        <div class="crack-label">rockyou.txt + best66.rule · ~10 seconds runtime</div>
+        <strong>Status: Exhausted.</strong> ~947 million candidates tried, 0/1 recovered.
+      </div>
+
+      <p>Still no match. best66 includes things like "capitalize first letter," "append a digit 0 through 9," "reverse," "toggle case of one character." Common patterns that catch most lazy passwords. None of them caught mine.</p>
+
+      <h3>Step 5: Dive.rule (The Big One)</h3>
+
+      <p>Time to escalate to the aggressive rule set. <code>dive.rule</code> contains <strong>98,670 rules</strong>. Combined with rockyou's 14.3 million words, that produces a keyspace of 1,415,360,369,280 candidates. That's <strong>1.4 trillion</strong>. Most "is this password crackable in practice" questions get answered by dive.rule.</p>
+
+      <pre><code>.\hashcat.exe -m 0 -a 0 -O C:\Tools\hash.txt `
+  C:\Tools\SecLists\Passwords\Leaked-Databases\rockyou.txt `
+  -r rules\dive.rule</code></pre>
+
+      <p>The RTX 3060 ran sustained at ~7 GH/s combined with the integrated AMD GPU helping. The full 1.4 trillion candidate keyspace exhausted in exactly 3 minutes.</p>
+
+      <div class="crack-result fail">
+        <div class="crack-label">rockyou.txt + dive.rule · 3 minutes 0 seconds runtime</div>
+        <strong>Status: Exhausted.</strong> 1,415,360,369,280 candidates tried at ~7.1 GH/s, 0/1 recovered.
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-callout">
+          <span class="stat-number">1.4T</span>
+          <span class="stat-label">Candidates tested</span>
+        </div>
+        <div class="stat-callout">
+          <span class="stat-number">7.1 GH/s</span>
+          <span class="stat-label">Sustained speed</span>
+        </div>
+        <div class="stat-callout">
+          <span class="stat-number">3 min</span>
+          <span class="stat-label">Total runtime</span>
+        </div>
+        <div class="stat-callout">
+          <span class="stat-number">0/1</span>
+          <span class="stat-label">Recovered</span>
+        </div>
+      </div>
+
+      <p>This is where the post would have ended if I had stopped at "the encryption was the weak link." Generic offline cracking against my password, with the industry-standard tooling and a respectable consumer GPU, hit a wall. If an attacker had stolen this hash from a breach dump and run dive against it, they would have moved on to easier targets.</p>
+
+      <p>But I knew my own password. So I switched hats and tried a different attack.</p>
+
+      <h3>Step 6: Naive Targeted Attack</h3>
+
+      <p>The shift here is important. Generic attacks throw the kitchen sink at a hash. Targeted attacks make educated guesses about the password's structure and try to invert that specific structure.</p>
+
+      <p>My password is <code>F1nDMyP@55w0rd</code>. The structure is clearly "Find My Password" with leetspeak substitutions: <code>i</code> → <code>1</code>, <code>a</code> → <code>@</code>, <code>s</code> → <code>5</code>, <code>o</code> → <code>0</code>. If an attacker guessed the phrase, they could feed it through a leetspeak-focused rule set.</p>
+
+      <pre><code># Build a single-word wordlist with just the base phrase
+[System.IO.File]::WriteAllText("C:\Tools\custom.txt", "findmypassword")
+
+# Throw it at the Incisive leetspeak rule set
+.\hashcat.exe -m 0 -a 0 -O C:\Tools\hash.txt C:\Tools\custom.txt -r rules\Incisive-leetspeak.rule</code></pre>
+
+      <div class="crack-result fail">
+        <div class="crack-label">findmypassword + Incisive-leetspeak.rule · &lt;1 second runtime</div>
+        <strong>Status: Exhausted.</strong> Tens of thousands of leetspeak variants applied, 0/1 recovered.
+      </div>
+
+      <p>Failed. I assumed Incisive would cover the substitution pattern, and it does, but my password has more going on than just leetspeak.</p>
+
+      <p>Look at the capitalization carefully:</p>
+
+      <pre><code>F 1 n D M y P @ 5 5 w 0 r d
+↑     ↑ ↑   ↑</code></pre>
+
+      <p>Four capital letters. <code>F</code> at position 0, <code>D</code> at position 3, <code>M</code> at position 4, <code>P</code> at position 6. Those positions aren't random. They line up exactly with the word boundaries of the underlying phrase: <strong>F</strong>ind <strong>M</strong>y <strong>P</strong>assword. I PascalCased the phrase before applying leetspeak, but the words are concatenated so the capitalizations land mid-string rather than at obvious word breaks.</p>
+
+      <p>The Incisive leetspeak rules don't know to look for word boundaries inside concatenated phrases. They apply leetspeak substitutions and sometimes capitalize position 0, but not mid-string capitalizations at specific positions. My naive targeted attack failed for the same reason the generic attack failed: the rule set didn't model my specific pattern.</p>
+
+      <h3>Step 7: Precise Targeted Attack</h3>
+
+      <p>This is the attack that works. Building a custom rule that exactly replicates my transformation chain.</p>
+
+      <p>Trace the transformation through:</p>
+
+      <ol>
+        <li>Start: <code>findmypassword</code></li>
+        <li>Capitalize position 0 (<code>c</code>): <code>Findmypassword</code></li>
+        <li>Toggle case at position 3 (<code>T3</code>): <code>FinDmypassword</code></li>
+        <li>Toggle case at position 4 (<code>T4</code>): <code>FinDMypassword</code></li>
+        <li>Toggle case at position 6 (<code>T6</code>): <code>FinDMyPassword</code></li>
+        <li>Substitute <code>i</code> with <code>1</code> (<code>si1</code>): <code>F1nDMyPassword</code></li>
+        <li>Substitute <code>a</code> with <code>@</code> (<code>sa@</code>): <code>F1nDMyP@ssword</code></li>
+        <li>Substitute <code>s</code> with <code>5</code> (<code>ss5</code>): <code>F1nDMyP@55word</code></li>
+        <li>Substitute <code>o</code> with <code>0</code> (<code>so0</code>): <code>F1nDMyP@55w0rd</code></li>
+      </ol>
+
+      <p>That's the rule. Eight steps. Save as a one-line custom rule file:</p>
+
+      <pre><code>[System.IO.File]::WriteAllText("C:\Tools\HashCat\hashcat-7.1.2\rules\custom-leet.rule", "c T3 T4 T6 si1 sa@ ss5 so0")
+
+.\hashcat.exe -m 0 -a 0 -O C:\Tools\hash.txt C:\Tools\custom.txt -r rules\custom-leet.rule</code></pre>
+
+      <div class="crack-result win">
+        <div class="crack-label">findmypassword + custom-leet.rule · 1 second runtime</div>
+        <strong>Status: Cracked.</strong> <code>2ce83e50df47ac7faf93bc8654d7ee88:F1nDMyP@55w0rd</code> · Recovered: 1/1 (100.00%) · 1 candidate tested.
+      </div>
+
+      <p>One word in the wordlist. One rule. One match. 1.4 trillion candidates couldn't get it, but the right single candidate did.</p>
+
+      <h2>The Thesis: No Password is Uncrackable</h2>
+
+      <p>Stack the results next to each other and the lesson is unavoidable:</p>
+
+      <div class="highlight-box">
+        <h3>What it took to crack my password</h3>
+        <ul>
+          <li>Crackstation lookup → no match</li>
+          <li>rockyou.txt straight wordlist → no match (14M candidates)</li>
+          <li>rockyou.txt + best66.rule → no match (947M candidates)</li>
+          <li>rockyou.txt + dive.rule → no match (1.4T candidates in 3 minutes)</li>
+          <li>findmypassword + Incisive-leetspeak.rule → no match (naive targeted attack)</li>
+          <li><strong>findmypassword + hand-built rule → CRACKED in 1 second</strong></li>
+        </ul>
+      </div>
+
+      <p>The first five attempts taught me my password was strong against generic attacks. The sixth attempt taught me that "strong against generic attacks" isn't the same thing as "uncrackable."</p>
+
+      <p>Every password has a structure. Every structure can be modeled as a rule. The only question is whether anyone with enough motivation and pattern insight ever builds the rule that matches yours. Today nobody has. Tomorrow somebody might. The hash sitting in your database is the same hash either way.</p>
+
+      <p>This is the part that doesn't get talked about enough in the "strong password" conversation. A 14-character password with mixed case, numbers, and symbols sounds airtight in a corporate IT policy. It survives every standard rule set in hashcat. It survives 1.4 trillion candidates on a consumer GPU in 3 minutes. And it falls to a single hand-crafted rule that knows the pattern. That rule didn't exist before tonight. It exists now, written into the cracking community's collective vocabulary the moment I published it here.</p>
+
+      <p>The defense isn't complexity. Complexity buys you time against generic attacks. The real defense is uniqueness combined with randomness:</p>
+
+      <ul>
+        <li><strong>Random passwords from a password manager.</strong> No pattern to invert, no rule that catches them, no transferable insight if one of them is compromised.</li>
+        <li><strong>One password per service.</strong> If you have a pattern, a breach of one service exposes the pattern, which then makes every other service one rule away.</li>
+        <li><strong>Multi-factor authentication on top of all of it.</strong> Because if any of the above fails, MFA buys you a recovery window.</li>
+      </ul>
+
+      <p>"Memorable strong password" is a contradiction in the long run. Memorable means there's a pattern. Pattern means the password is one rule away from cracked. The only way to break that chain is to stop relying on a memorable string in the first place.</p>
+
+      <h2>The Detection Angle</h2>
+
+      <p>The reason the SSLKEYLOGFILE technique matters operationally isn't that pen testers use it (they do, but they have access by definition). The reason it matters is that some commodity infostealers abuse the exact same mechanism. If an attacker can set <code>SSLKEYLOGFILE</code> on a user's session and either read the file later or exfiltrate it, they can passively capture and decrypt that user's HTTPS traffic as long as they also have network visibility (or get the user to install a "diagnostic" tool that captures traffic locally).</p>
 
       <p>Worth hunting for in SentinelOne DVQL, or whatever SIEM you have on the endpoint logs. The patterns to watch for:</p>
 
@@ -523,27 +613,33 @@ Tailscale                      100.100.100.100</code></pre>
         <li>Unusual file writes to paths that look like keylog targets (anything named <code>*.log</code> in a temp directory that's growing during active browser usage is suspicious)</li>
       </ul>
 
-      <p>None of these is a sure indicator on its own. Developers and security researchers legitimately set the env var for debugging. But on a production workstation with no developer profile, an unprompted <code>SSLKEYLOGFILE</code> environment variable showing up is worth a second look — especially if it correlates with browser activity that follows.</p>
+      <p>None of these is a sure indicator on its own. Developers and security researchers legitimately set the env var for debugging. But on a production workstation with no developer profile, an unprompted <code>SSLKEYLOGFILE</code> environment variable showing up is worth a second look, especially if it correlates with browser activity that follows.</p>
 
       <h2>Lessons Learned</h2>
 
       <p><strong>The endpoint is always inside the trust boundary, and that's by design.</strong> TLS protects against passive observers on the network path. It does not protect against the endpoints participating in the conversation, because those endpoints need the plaintext to do their job. SSLKEYLOGFILE is the formal way to share that fact with analysis tools. It's not a flaw, it's a feature, and trying to design around it usually misunderstands the threat model.</p>
 
-      <p><strong>Where you capture matters as much as what you capture.</strong> My Tailscale subnet router silently changed the route to the lab subnet, and the right capture interface turned out to be virtual rather than physical. <code>Find-NetRoute</code> is the cleanest way to answer "which interface is Windows actually using to reach this host" before committing to a capture. Without that check I'd have been staring at an empty capture filter wondering why nothing was happening.</p>
+      <p><strong>Where you capture matters as much as what you capture.</strong> My Tailscale subnet router silently changed the route to the lab subnet, and the right capture interface turned out to be virtual rather than physical. <code>Find-NetRoute</code> is the cleanest way to answer "which interface is Windows actually using to reach this host" before committing to a capture.</p>
 
       <p><strong>Self-hosting the target made the demo cleaner.</strong> If I'd captured against a real third-party site, the screenshots would have been awkward and the findings less educational. With Juice Shop running in my lab, I could plant exactly the kind of data that makes the security thesis visible, without ethical or legal noise.</p>
 
-      <p><strong>The JWT design is the real attack surface, not the TLS.</strong> Once I could see the inside of the session traffic, the encryption story stopped being interesting. The interesting stuff was the implementation choices: full user record in the token, weak hashing, no expiry. Those are the findings a real engagement would put on a report. The decryption was just the access mechanism that made them visible.</p>
+      <p><strong>The JWT design is the real attack surface, not the TLS.</strong> Once I could see the inside of the session traffic, the encryption story stopped being interesting. The interesting stuff was the implementation choices: full user record in the token, MD5 hashing, no expiry. Those are the findings a real engagement would put on a report. The decryption was just the access mechanism that made them visible.</p>
 
-      <p><strong>Strong passwords still matter even when the hashing is broken.</strong> Crackstation didn't find my MD5 hash because the underlying password wasn't in its precomputed tables. The hash is technically crackable with sufficient compute, but most credential-recovery attacks aren't going to spend GPU-hours on a single hash — they're going to do rainbow table lookups and move on to the next victim. Complexity defeats that lookup even when the hashing algorithm is indefensible.</p>
+      <p><strong>Generic strength is not absolute strength.</strong> My password survived every attack a hashcat user would throw at it by default. That's not the same as being uncrackable. It's the same as being uncracked yet. Once the pattern was known, the password fell to one rule in one second. Every password has a "right rule." Some of those rules are already written and shipped in standard rule sets. Some are still waiting to be written by the first attacker who happens to think about your specific pattern.</p>
+
+      <p><strong>Use a password manager.</strong> The only password discipline that doesn't have a rule that defeats it is "no pattern at all, generated randomly per service." That's the actual takeaway from this whole exercise. Memorable strong passwords are a worse defense than people think. The generic-attack survival rate looks great. The targeted-attack survival rate is the real number, and it trends toward zero given enough time and pattern exposure.</p>
 
       <h2>Conclusion</h2>
 
-      <p>The video that kicked this off wasn't wrong, exactly, but the framing buried the lesson. "Wireshark can decrypt HTTPS if TLS key logging is enabled" makes the technique sound like a vulnerability or a clever trick. It's neither. It's a debugging feature in every modern TLS stack that exists because endpoints sometimes need to share their session keys with analysis tools running locally. The "trick" is being one of the endpoints, which means having the plaintext you're trying to look at.</p>
+      <p>The video that kicked this off framed TLS key logging as some kind of clever trick or vulnerability. It's neither. It's a debugging feature in every modern TLS stack that exists because endpoints sometimes need to share their session keys with analysis tools running locally. The "trick" is being one of the endpoints, which means having the plaintext you're trying to look at.</p>
 
-      <p>What's actually worth taking from this is the way it forces clarity on what TLS does. TLS protects traffic between endpoints from third parties on the network in between. It doesn't, and was never trying to, hide the plaintext from the endpoints that are part of the conversation. Once that's clear, SSLKEYLOGFILE makes sense as an obvious mechanism, infostealer abuse of it makes sense as a real threat, and the implementation findings inside the decrypted session (JWT design, password hashing, missing expiry) make sense as the real attack surface in most modern web apps.</p>
+      <p>What I didn't expect was how much the cracking arc would steal the show. Building the TLS lab was supposed to be the post. Pulling the JWT and finding the MD5 hash was supposed to be the finding. Cracking the hash was supposed to be a footnote: "and obviously this MD5 is recoverable, so the encryption was the weakest link in the chain." Except the encryption wasn't the weakest link. The encryption did its job perfectly, twice (TLS and WireGuard). The password discipline did its job too, holding off 1.4 trillion candidates. The thing that actually broke was the moment I switched from generic attack to targeted attack with insight into my own pattern.</p>
 
-      <p>If you've got a homelab and an hour, this is a good build to run yourself. It reframed how I explain TLS to people, and the next time I'm in a conversation where someone says "but it's over HTTPS so it's safe," I'll have a screenshot that says otherwise.</p>
+      <p>That's the security industry's quiet truth about password storage. The hashing matters less than people think. The password complexity matters less than people think. What matters most is whether anyone with enough motivation ever sits down and models your specific structure into a rule. Today they haven't. Tomorrow they might. The hash sitting in someone else's database doesn't care about the difference.</p>
+
+      <p>If you take one thing from this post, take this: every password is eventually crackable. The only question is whether the rule that cracks it has been written yet. That's why password managers exist. That's why MFA exists. That's why per-service uniqueness matters even when each individual password looks strong on its own. The defense isn't a stronger string. The defense is making sure no single string is worth the effort of building the rule.</p>
+
+      <p>If you've got a homelab and an evening, this is a good build to run yourself. It reframed how I explain TLS to people, and the next time I'm in a conversation where someone says "but it's a strong password, it's safe," I'll have a screenshot that shows 1.4 trillion candidates exhausted in 3 minutes followed by a 1-second crack with the right rule. Same hash both times. Same password both times. Different attacker, different outcome.</p>
 
       <div class="blog-tags">
         <span class="blog-tag">tls</span>
@@ -552,6 +648,9 @@ Tailscale                      100.100.100.100</code></pre>
         <span class="blog-tag">homelab</span>
         <span class="blog-tag">juice-shop</span>
         <span class="blog-tag">jwt</span>
+        <span class="blog-tag">password-cracking</span>
+        <span class="blog-tag">hashcat</span>
+        <span class="blog-tag">md5</span>
         <span class="blog-tag">security</span>
         <span class="blog-tag">encryption</span>
         <span class="blog-tag">tailscale</span>
