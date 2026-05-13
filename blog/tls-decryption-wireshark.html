@@ -31,6 +31,9 @@
     .blog-content code { background: rgba(255, 255, 255, 0.05); padding: 0.2rem 0.4rem; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.9em; color: var(--accent-primary); }
     .blog-content pre { background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1.5rem 0; border: 1px solid rgba(255, 255, 255, 0.1); }
     .blog-content pre code { background: none; padding: 0; color: var(--text-secondary); }
+    .blog-content figure { margin: 2rem 0; text-align: center; }
+    .blog-content figure img { max-width: 100%; height: auto; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+    .blog-content figcaption { margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted); font-style: italic; line-height: 1.5; }
     .blog-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); }
     .blog-tag { background: rgba(255, 255, 255, 0.05); padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem; color: var(--text-secondary); }
     .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent-primary); text-decoration: none; margin-bottom: 2rem; transition: gap 0.2s ease; }
@@ -309,6 +312,11 @@ Tailscale                      100.100.100.100</code></pre>
 
       <p>Stop the capture. Right-click on any TLS packet in the conversation and pick Follow → HTTP/2 Stream.</p>
 
+      <figure>
+        <img src="../assets/wireshark-capture.png" alt="Wireshark capture window showing decrypted HTTP/2 frames on the Tailscale virtual interface, with a Decrypted TLS tab visible at the bottom of the packet detail pane">
+        <figcaption>Wireshark with the keylog file loaded, capturing on the Tailscale virtual interface. HTTP/2 frames render in cleartext where there would otherwise be opaque TLS Application Data — note the <code>Decrypted TLS (272 bytes)</code> tab at the bottom of the packet detail pane.</figcaption>
+      </figure>
+
       <h2>What the Decrypted Traffic Shows</h2>
 
       <p>This is where the demo earns its weight. The traffic in Wireshark before the keylog is loaded is just TLS Application Data records, opaque ciphertext, exactly what TLS is supposed to look like to a network observer. The moment the keylog is referenced in TLS preferences, the same packets render as fully decoded HTTP/2 streams with everything visible.</p>
@@ -323,6 +331,11 @@ Tailscale                      100.100.100.100</code></pre>
       </ul>
 
       <p>The JWT was the interesting one. Standard three-section base64 structure separated by dots. Pasted into jwt.io to decode the payload (offline alternative: a PowerShell one-liner that splits on dots, base64-decodes the middle section, and pretty-prints the JSON).</p>
+
+      <figure>
+        <img src="../assets/wireshark-follow-http2-stream.png" alt="Wireshark Follow HTTP/2 Stream window showing a GET request to lab.local with the full request headers, including a cookie line highlighted in pink containing the JWT token">
+        <figcaption>The Follow HTTP/2 Stream view. The cookie carrying the JWT is highlighted in pink — every byte that TLS was hiding, now in plaintext. Browser fingerprint headers, the session token, and the full response chain are all readable.</figcaption>
+      </figure>
 
       <h2>Inside the JWT</h2>
 
@@ -346,6 +359,11 @@ Tailscale                      100.100.100.100</code></pre>
   },
   "iat": 1778644805
 }</code></pre>
+
+      <figure>
+        <img src="../assets/jwt-io-decoded-payload.png" alt="jwt.io decoded payload showing a JSON object with status, full user data including id, email, password hash, role, totpSecret, isActive, timestamps, and an iat claim with no exp claim">
+        <figcaption>The decoded payload on jwt.io. The full user record sits inside the token — including the password hash and a <code>totpSecret</code> field — and the <code>iat</code> claim has no matching <code>exp</code>.</figcaption>
+      </figure>
 
       <p>Three things stand out immediately, and they each tell a different security story.</p>
 
@@ -399,7 +417,7 @@ Tailscale                      100.100.100.100</code></pre>
         <li>Hashing the original password forward produced the same hex string as the one in the JWT</li>
       </ol>
 
-      <p>I made a rooky mistake on my first CyberChef attempt that's honestly worth mentioning because it's a common confusion. My first instinct was to paste the hash <em>into the input field</em> and run MD5 on it, expecting some kind of decode. That doesn't work, because MD5 is one-way. Running MD5 on the hash just produced another MD5 of the hash. The correct workflow is to put the candidate password as the input and MD5 as the recipe, then compare the output to the target hash. Trivial point, but I bring it up because I keep seeing this exact confusion in IT spaces and it's worth the reminder: hashing is not encryption, and there's nothing to decrypt.</p>
+      <p>I made a small mistake on my first CyberChef attempt that's worth flagging because it's a common confusion. My first instinct was to paste the hash <em>into the input field</em> and run MD5 on it, expecting some kind of decode. That doesn't work, because MD5 is one-way. Running MD5 on the hash just produced another MD5 of the hash. The correct workflow is to put the candidate password as the input and MD5 as the recipe, then compare the output to the target hash. Trivial point, but I bring it up because I keep seeing this exact confusion in IT spaces and it's worth the reminder: hashing is not encryption, and there's nothing to decrypt.</p>
 
       <h2>Trying to Actually Crack It</h2>
 
@@ -417,6 +435,11 @@ Tailscale                      100.100.100.100</code></pre>
         <div class="crack-label">Crackstation lookup</div>
         <strong>Not Found.</strong> Hash type: Unknown.
       </div>
+
+      <figure>
+        <img src="../assets/crackstation-not-found.png" alt="Crackstation web interface showing the hash 2ce83e50df47ac7faf93bc8654d7ee88 in the input box with a red Not found result and Unknown hash type">
+        <figcaption>Crackstation can't recover it. The hash isn't in any of their precomputed lookup tables — the &ldquo;Unknown&rdquo; type label just means no MD5 plaintext came back, not that the algorithm is mysterious.</figcaption>
+      </figure>
 
       <p>Good sign for the password. It's not in any of the wordlists Crackstation has precomputed. The "Unknown" hash type label is a bit misleading: it just means none of their MD5 lookups produced a hit, so they couldn't confirm the algorithm. The hash is clearly MD5 by shape, they just can't reverse-confirm by finding a known plaintext.</p>
 
@@ -506,6 +529,11 @@ Tailscale                      100.100.100.100</code></pre>
         </div>
       </div>
 
+      <figure>
+        <img src="../assets/hashcat-dive-exhausted.png" alt="Hashcat console output showing Status: Exhausted with rockyou.txt and dive.rule, 7143.6 MH/s combined speed, 1,415,360,369,280 candidates tried in 3 minutes, 0 of 1 digests recovered">
+        <figcaption>Hashcat exhausted on rockyou.txt × dive.rule at 7.1 GH/s combined across both GPUs. 1.4 trillion candidates in exactly three minutes, zero recovered. The GPU isn't slow — the rule space just doesn't contain my password's pattern.</figcaption>
+      </figure>
+
       <p>This is where the post would have ended if I had stopped at "the encryption was the weak link." Generic offline cracking against my password, with the industry-standard tooling and a respectable consumer GPU, hit a wall. If an attacker had stolen this hash from a breach dump and run dive against it, they would have moved on to easier targets.</p>
 
       <p>But I knew my own password. So I switched hats and tried a different attack.</p>
@@ -566,6 +594,11 @@ Tailscale                      100.100.100.100</code></pre>
         <div class="crack-label">findmypassword + custom-leet.rule · 1 second runtime</div>
         <strong>Status: Cracked.</strong> <code>2ce83e50df47ac7faf93bc8654d7ee88:F1nDMyP@55w0rd</code> · Recovered: 1/1 (100.00%) · 1 candidate tested.
       </div>
+
+      <figure>
+        <img src="../assets/hashcat-cracked.png" alt="Hashcat console output showing Status: Cracked, the hash followed by the plaintext F1nDMyP@55w0rd highlighted in a red outlined box, with the custom.txt wordlist and custom-leet.rule, 1 second runtime, 1 of 1 digests recovered">
+        <figcaption>Status: Cracked. One word, one rule, one second. The same GPU that ran 1.4 trillion candidates without a hit gets the plaintext on a single guess once the rule matches the structure.</figcaption>
+      </figure>
 
       <p>One word in the wordlist. One rule. One match. 1.4 trillion candidates couldn't get it, but the right single candidate did.</p>
 
