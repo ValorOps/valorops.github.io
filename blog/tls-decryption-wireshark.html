@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decrypting My Own TLS Traffic with Wireshark - Dillan Valor</title>
+  <meta name="description" content="A video claimed Wireshark could decrypt HTTPS if 'TLS key logging is enabled.' That phrasing isn't quite right, but the underlying technique is real. I built a full lab in my homelab to walk through what actually happens — and what it teaches about where TLS does and doesn't protect you.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+  <link rel="shortcut icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon-256x256.png">
+
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    .blog-header {
+      background: var(--bg-primary);
+      padding: 2rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .blog-meta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+
+    .blog-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .blog-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+
+    .blog-content h2 {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      font-size: 1.75rem;
+    }
+
+    .blog-content h3 {
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+      font-size: 1.35rem;
+    }
+
+    .blog-content p {
+      margin-bottom: 1.25rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .blog-content ul, .blog-content ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+
+    .blog-content li {
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .blog-content strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .blog-content code {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      color: var(--accent-primary);
+    }
+
+    .blog-content pre {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .blog-content pre code {
+      background: none;
+      padding: 0;
+      color: var(--text-secondary);
+    }
+
+    .blog-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .blog-tag {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent-primary);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      transition: gap 0.2s ease;
+    }
+
+    .back-link:hover {
+      gap: 0.75rem;
+    }
+
+    .dolphins-insignia {
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 180px;
+      height: auto;
+      opacity: 0.95;
+      transition: opacity 0.3s ease;
+    }
+
+    .dolphins-insignia:hover { opacity: 1; }
+
+    header { position: relative; }
+
+    .highlight-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .highlight-box h3 {
+      margin-top: 0;
+      font-size: 1.1rem;
+    }
+
+    .highlight-box ul { margin-bottom: 0; }
+
+    .gotcha-box {
+      background: rgba(255, 150, 50, 0.08);
+      border: 1px solid rgba(255, 150, 50, 0.3);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+    }
+
+    .gotcha-box strong { color: #ffb84d; }
+
+    .finding-box {
+      background: rgba(255, 100, 100, 0.08);
+      border: 1px solid rgba(255, 100, 100, 0.25);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+    }
+
+    .finding-box strong { color: #ff6b6b; }
+
+    @media (max-width: 768px) {
+      .dolphins-insignia { width: 120px; right: 1rem; }
+      .blog-content { padding: 2rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="../index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../experience.html">Experience</a>
+        <a href="index.html" class="active">Blog</a>
+        <a href="../index.html#contact">Contact</a>
+      </nav>
+    </div>
+    <img src="../assets/dolphins.png" alt="Enlisted Submarine Warfare Insignia" class="dolphins-insignia">
+  </header>
+
+  <main>
+    <div class="blog-header">
+      <div class="container">
+        <a href="index.html" class="back-link">← Back to Blog</a>
+        <h1 style="margin-bottom: 1rem;">Decrypting My Own TLS Traffic with Wireshark</h1>
+        <div class="blog-meta">
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            May 13, 2026
+          </span>
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            15 min read
+          </span>
+        </div>
+        <p class="lead" style="margin: 0;">A video claimed Wireshark could decrypt HTTPS "if the server has TLS key logging enabled." That phrasing isn't quite right, but the underlying technique is real and worth understanding properly. I built a full lab on my homelab to walk through what actually happens — and what it teaches about where TLS does and doesn't protect you.</p>
+      </div>
+    </div>
+
+    <article class="blog-content">
+
+      <h2>The Question That Started This</h2>
+      <p>A cybersecurity content creator posted a video saying you can decrypt captured HTTPS traffic in Wireshark if "the server has TLS key logging enabled." That sounded close to true, but the framing felt wrong in a way I wanted to dig into. So I spent an evening building a controlled lab to actually do it end to end, on infrastructure I own, and write up what I found.</p>
+
+      <p>The short version: the technique works, but the description was misleading in a way that matters. The keys never travel over the network. The endpoint that has them writes them out to a local file, and Wireshark reads that file from disk to decrypt traffic it already captured. There's no key capture in transit. There's an endpoint volunteering its own session secrets through a documented debugging mechanism.</p>
+
+      <p>The lesson underneath is the part that's actually useful for an MSP or security audience: TLS protects traffic from third parties on the network path. It was never trying to protect traffic from the endpoints that are part of the conversation. If you're one of the endpoints, you have the plaintext by definition, and SSLKEYLOGFILE is just the formal API for sharing that fact with analysis tools.</p>
+
+      <h2>How TLS Decryption with SSLKEYLOGFILE Actually Works</h2>
+
+      <p>Modern TLS (1.2 and 1.3) derives session keys on both endpoints independently using Diffie-Hellman. The math is set up so that the two parties can agree on a shared secret without ever transmitting the secret itself. That property is why TLS works at all. A passive observer on the network sees the public values exchanged during the handshake but cannot compute the shared secret from them.</p>
+
+      <p>That public value exchange is the only thing on the wire. The session keys themselves stay in memory on each endpoint and never appear in any packet. Even with perfect forward secrecy in TLS 1.3, the server's long-term private key cannot be used to recover past session traffic — every session has its own ephemeral key material.</p>
+
+      <p>The SSLKEYLOGFILE environment variable is a debugging hook implemented in most modern TLS libraries (NSS, BoringSSL, OpenSSL with the right callbacks, .NET, Java with flags, and so on). When the env var is set to a file path, the TLS library writes the per-session key material it just derived to that file in NSS Key Log Format. Wireshark reads the file, matches the secrets against the encrypted records in a capture, and decrypts the application data locally.</p>
+
+      <p>The format is plain text and looks like this:</p>
+
+      <pre><code>CLIENT_HANDSHAKE_TRAFFIC_SECRET &lt;32-byte client random&gt; &lt;48-byte secret&gt;
+SERVER_HANDSHAKE_TRAFFIC_SECRET &lt;32-byte client random&gt; &lt;48-byte secret&gt;
+CLIENT_TRAFFIC_SECRET_0 &lt;32-byte client random&gt; &lt;48-byte secret&gt;
+SERVER_TRAFFIC_SECRET_0 &lt;32-byte client random&gt; &lt;48-byte secret&gt;</code></pre>
+
+      <p>That's it. The client random is the identifier Wireshark uses to match a key entry against a TLS session in a capture. The secret is the actual key material derived during the handshake.</p>
+
+      <h2>Why This Isn't a TLS Vulnerability</h2>
+
+      <p>The framing in the original video implied this was some kind of weakness in TLS. It isn't. Two reasons.</p>
+
+      <p>First, the entire mechanism requires endpoint cooperation. The server-side or client-side TLS library has to actively write out its own session keys to disk. There is no way for a third party on the network to extract these keys passively. If an attacker has the access required to set SSLKEYLOGFILE on a target endpoint and read the file later, they already have code execution on the box, which means they have easier paths to the same data — read browser memory, hook the HTTP library, dump credentials directly.</p>
+
+      <p>Second, TLS was never designed to hide traffic from the endpoints participating in the conversation. The threat model is network-level eavesdroppers between the client and server. The client and the server are both inside the trust boundary by definition. SSLKEYLOGFILE just gives you, the endpoint operator, a clean way to share what you already have with an analysis tool running on the same machine.</p>
+
+      <p>The real takeaway for security practitioners: if your threat model assumes TLS protects sensitive data from the endpoint that's processing it, your threat model has a hole in it. Pen testers reverse-engineer mobile app APIs this way every day. Forensic analysts use it for malware analysis. It's a feature, not a flaw.</p>
+
+      <h2>Why I Built the Lab Locally Instead of Capturing Real Traffic</h2>
+
+      <p>The simplest demo of SSLKEYLOGFILE is just setting it and browsing to any public HTTPS site. That works fine for proving the technique, but it has two problems for a write-up. The screenshots would show real traffic to a real third-party service, which is awkward both ethically and legally. And the captured content wouldn't be obviously interesting — TLS hides a lot, but a lot of what it hides is boring API calls or static assets.</p>
+
+      <p>A self-hosted target solves both. I can plant deliberately interesting data in the responses (credentials, tokens, session cookies), capture every byte of it, and not worry about whose data I'm looking at. OWASP Juice Shop is the obvious choice because it's an intentionally-vulnerable web application that the security community already recognizes, and it generates the exact kinds of payloads that make for good screenshots — login POSTs with email and password in JSON bodies, JWT tokens in cookies, REST API calls returning user data.</p>
+
+      <p>So the lab needs four things: a backend application that produces interesting traffic, a reverse proxy that terminates TLS with a cert my workstation will trust, a way to capture the traffic on my workstation, and the SSLKEYLOGFILE side of the equation to feed Wireshark.</p>
+
+      <h2>The Stack</h2>
+
+      <p>Everything except the Wireshark side lives in my Proxmox lab on an Ubuntu VM running Docker. I already had Nginx Proxy Manager (NPM) running on that VM for other services, so I leaned on it instead of standing up raw nginx.</p>
+
+      <div class="highlight-box">
+        <h3>Server side (Ubuntu VM at 10.10.0.100)</h3>
+        <ul>
+          <li>OWASP Juice Shop in a Docker container, exposed on port 3000 inside the Docker network</li>
+          <li>Nginx Proxy Manager handling TLS termination and reverse proxying to Juice Shop</li>
+          <li>mkcert installed to generate a locally-trusted CA and an X.509 cert for <code>lab.local</code></li>
+        </ul>
+      </div>
+
+      <div class="highlight-box">
+        <h3>Client side (Windows 11 workstation)</h3>
+        <ul>
+          <li>mkcert root CA imported into the Windows Trusted Root store via <code>certutil</code></li>
+          <li><code>SSLKEYLOGFILE</code> set as a system environment variable pointing at <code>C:\Temp\keys.log</code></li>
+          <li>Hosts file entry mapping <code>lab.local</code> to the Ubuntu VM's IP</li>
+          <li>Wireshark with the keylog path configured in TLS preferences</li>
+        </ul>
+      </div>
+
+      <h2>Spinning Up Juice Shop</h2>
+
+      <p>One Docker command, one network attachment. Both containers need to be on the same Docker network so NPM can resolve <code>juice-shop</code> by hostname.</p>
+
+      <pre><code>docker network create labnet
+
+docker network connect labnet nginx-proxy-manager
+
+docker run -d \
+  --name juice-shop \
+  --network labnet \
+  --restart unless-stopped \
+  bkimminich/juice-shop</code></pre>
+
+      <p>Quick sanity check from inside the NPM container to confirm it can reach Juice Shop by name:</p>
+
+      <pre><code>docker exec nginx-proxy-manager curl -sI http://juice-shop:3000</code></pre>
+
+      <p>Should return <code>HTTP/1.1 200 OK</code> with headers including <code>X-Recruiting: /#/jobs</code>, which is a Juice Shop signature.</p>
+
+      <h2>The Certificate: mkcert</h2>
+
+      <p>I wanted a real cert (no browser warnings cluttering the screenshots) without dealing with public DNS for an internal-only hostname. mkcert is perfect for that. It generates a local CA, installs the root cert into your OS trust store, and signs certs for whatever hostnames you specify. The result is indistinguishable from a public CA cert from the browser's perspective, as long as the root CA is trusted on the client machine.</p>
+
+      <p>On the Ubuntu VM:</p>
+
+      <pre><code>sudo apt install -y libnss3-tools
+curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64"
+chmod +x mkcert-v*-linux-amd64
+sudo mv mkcert-v*-linux-amd64 /usr/local/bin/mkcert
+
+mkdir ~/lab-certs && cd ~/lab-certs
+mkcert lab.local</code></pre>
+
+      <p>That produces <code>lab.local.pem</code> (the cert) and <code>lab.local-key.pem</code> (the private key). Both need to be uploadable to NPM later.</p>
+
+      <p>The root CA itself lives in <code>$(mkcert -CAROOT)</code> on the VM. I copied <code>rootCA.pem</code> over to my Windows machine via scp.</p>
+
+      <h2>Trusting the Root CA on Windows</h2>
+
+      <p>This is the step where the first gotcha showed up.</p>
+
+      <div class="gotcha-box">
+        <strong>Kleopatra hijacks .crt files on Windows.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">I had Gpg4win installed from some prior experimentation, and Kleopatra had registered itself as the default handler for <code>.crt</code> files. Double-clicking the cert pops Kleopatra, which then errors out because <code>rootCA.pem</code> is an X.509 cert, not a PGP key. Mildly annoying. The fix is to skip the GUI entirely.</p>
+      </div>
+
+      <p>From an admin Command Prompt:</p>
+
+      <pre><code>certutil -addstore -f "Root" C:\Temp\rootCA.crt</code></pre>
+
+      <p>That imports the cert into the Local Machine Trusted Root Certification Authorities store. Verify it took:</p>
+
+      <pre><code>certutil -store "Root" | findstr /i "mkcert"</code></pre>
+
+      <p>Output should show the mkcert CA with the subject <code>CN=mkcert &lt;user&gt;@&lt;hostname&gt;</code>. Chrome will now accept any cert signed by this CA without warnings.</p>
+
+      <h2>Setting Up the Proxy Host in NPM</h2>
+
+      <p>Two pieces in the NPM web UI. First, upload the cert. Custom Certificate, name it <code>lab.local</code>, upload the two pem files (the <code>-key</code> file as the private key, the other as the cert, intermediate field blank).</p>
+
+      <p>Second, create the Proxy Host:</p>
+
+      <ul>
+        <li>Domain Names: <code>lab.local</code></li>
+        <li>Scheme: <code>http</code></li>
+        <li>Forward Hostname/IP: <code>juice-shop</code></li>
+        <li>Forward Port: <code>3000</code></li>
+        <li>Websockets Support: enabled (Juice Shop uses them)</li>
+        <li>SSL tab: pick the <code>lab.local</code> cert, enable Force SSL and HTTP/2</li>
+      </ul>
+
+      <div class="gotcha-box">
+        <strong>If you browse to the site before creating the Proxy Host, Chrome throws <code>ERR_SSL_UNRECOGNIZED_NAME_ALERT</code>.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">That error means nginx doesn't have a server block listening for the SNI hostname you sent. The cert is uploaded but isn't bound to anything yet. Finishing the Proxy Host configuration resolves it instantly.</p>
+      </div>
+
+      <h2>The Windows Side: Hosts File and SSLKEYLOGFILE</h2>
+
+      <p>Hosts file entry first. From an admin PowerShell:</p>
+
+      <pre><code>Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "`n10.10.0.100`tlab.local"</code></pre>
+
+      <p>Verify with <code>ping lab.local</code> — should resolve to <code>10.10.0.100</code>.</p>
+
+      <p>Then the env var, set machine-wide so it survives reboots and applies to all processes:</p>
+
+      <pre><code>[Environment]::SetEnvironmentVariable("SSLKEYLOGFILE", "C:\Temp\keys.log", "Machine")
+mkdir C:\Temp -Force</code></pre>
+
+      <div class="gotcha-box">
+        <strong>Chrome reads SSLKEYLOGFILE only at process launch.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">If Chrome is already running when you set the env var, it won't pick it up. You have to fully kill every <code>chrome.exe</code> process, including background ones, before launching fresh. The cleanest way:</p>
+        <pre style="margin-top: 0.75rem; margin-bottom: 0;"><code>Get-Process chrome -ErrorAction SilentlyContinue | Stop-Process -Force</code></pre>
+      </div>
+
+      <p>To smoke-test the client side before getting into the lab traffic, launch Chrome and browse to any HTTPS site (google.com, your bank, whatever). Then check the keylog:</p>
+
+      <pre><code>Get-Content C:\Temp\keys.log</code></pre>
+
+      <p>You should see a stack of <code>CLIENT_HANDSHAKE_TRAFFIC_SECRET</code> and <code>SERVER_HANDSHAKE_TRAFFIC_SECRET</code> lines. If the file is empty or missing, Chrome didn't pick up the env var. If it's populated, the client half of the setup is working.</p>
+
+      <h2>The Tailscale Wrinkle</h2>
+
+      <p>Once everything was running, I started Wireshark to capture, ran a <code>ping -t lab.local</code> to identify the right interface by activity, and immediately ran into something I didn't expect. The loopback adapter was lighting up with traffic that should have been going out a physical NIC. My ethernet was at <code>192.168.1.91</code> and Juice Shop was at <code>10.10.0.100</code>, so traffic should have been crossing my router. Instead, the routing lookup told a different story:</p>
+
+      <pre><code>Find-NetRoute -RemoteIPAddress 10.10.0.100 | Select InterfaceAlias, NextHop
+
+InterfaceAlias IPAddress       NextHop
+-------------- ---------       -------
+Tailscale      100.82.19.125
+Tailscale                      100.100.100.100</code></pre>
+
+      <p>This is when I remembered I'm running Tailscale on my pfSense VM as a subnet router. pfSense is advertising <code>10.10.0.0/24</code> into my Tailscale mesh, so my workstation takes the WireGuard tunnel to reach the lab subnet instead of the physical LAN path. That's actually how it should be configured — Tailscale handles the routing between my devices and the lab network, and I forgot it was in the picture.</p>
+
+      <p>Which is fun for the post, because it means there are now <em>two</em> encryption layers between my browser and Juice Shop:</p>
+
+      <ol>
+        <li><strong>WireGuard</strong> for the Tailscale tunnel</li>
+        <li><strong>TLS 1.3</strong> for the HTTPS session inside it</li>
+      </ol>
+
+      <p>Capturing on the Tailscale virtual interface shows traffic <em>after</em> WireGuard has been stripped off locally, so what Wireshark sees is clean TLS packets. The SSLKEYLOGFILE approach works identically. The WireGuard layer is decrypted by my Tailscale daemon before the packets ever hit the virtual interface, and the TLS layer is decrypted by Wireshark using the keylog. Both encryption layers, both transparent to me, neither broken in any meaningful sense. They were never trying to hide my own traffic from me.</p>
+
+      <h2>The Capture</h2>
+
+      <p>In Wireshark, configure the keylog file path under Edit → Preferences → Protocols → TLS → "(Pre)-Master-Secret log filename" pointing at <code>C:\Temp\keys.log</code>. Confirm HTTP/2 is enabled under Protocols → HTTP2 (it will be, since NPM negotiated h2).</p>
+
+      <p>Clear the keylog for a fresh capture session, kill Chrome for a clean TLS state, start the Wireshark capture on the Tailscale interface with display filter <code>ip.addr == 10.10.0.100 and (tls or http2)</code>, then launch Chrome and run a normal user flow on Juice Shop:</p>
+
+      <ol>
+        <li>Register a new account with an email and password</li>
+        <li>Log in with those credentials</li>
+        <li>Browse the product catalog</li>
+        <li>Add a couple items to the basket</li>
+      </ol>
+
+      <p>Stop the capture. Right-click on any TLS packet in the conversation and pick Follow → HTTP/2 Stream.</p>
+
+      <h2>What the Decrypted Traffic Shows</h2>
+
+      <p>This is where the demo earns its weight. The traffic in Wireshark before the keylog is loaded is just TLS Application Data records — opaque ciphertext, exactly what TLS is supposed to look like to a network observer. The moment the keylog is referenced in TLS preferences, the same packets render as fully decoded HTTP/2 streams with everything visible.</p>
+
+      <p>What I could see in the follow-stream view:</p>
+
+      <ul>
+        <li>The HTTP/2 pseudo-headers (<code>:method: GET</code>, <code>:authority: lab.local</code>, <code>:scheme: https</code>, <code>:path: /assets/...</code>) — the protocol envelope in plaintext</li>
+        <li>Full browser fingerprint headers (<code>user-agent</code>, <code>sec-ch-ua</code>, <code>accept-language</code>) — every header a passive network observer would never see</li>
+        <li>The session cookie containing a JWT: <code>token=eyJ0eXAiOiJKV1Qi...</code></li>
+        <li>Response headers including <code>server: openresty</code> (NPM's underlying engine) and the Juice Shop signature <code>x-recruiting: /#/jobs</code></li>
+      </ul>
+
+      <p>The JWT was the interesting one. Standard three-section base64 structure separated by dots. Pasted into jwt.io to decode the payload (offline alternative: a PowerShell one-liner that splits on dots, base64-decodes the middle section, and pretty-prints the JSON).</p>
+
+      <h2>Inside the JWT</h2>
+
+      <p>The decoded payload looked like this (test account, redacted slightly):</p>
+
+      <pre><code>{
+  "status": "success",
+  "data": {
+    "id": 24,
+    "email": "dillan@valor.test",
+    "password": "&lt;32-character hex string&gt;",
+    "role": "customer",
+    "deluxeToken": "",
+    "lastLoginIp": "0.0.0.0",
+    "profileImage": "/assets/public/images/uploads/default.svg",
+    "totpSecret": "",
+    "isActive": true,
+    "createdAt": "2026-05-13 03:59:45.795 +00:00",
+    "updatedAt": "2026-05-13 03:59:45.795 +00:00",
+    "deletedAt": null
+  },
+  "iat": 1778644805
+}</code></pre>
+
+      <p>Three things stand out, and they each tell a different security story.</p>
+
+      <div class="finding-box">
+        <strong>Finding 1: The full user record is inside the JWT.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">The token doesn't just carry the minimum needed for authorization (subject ID, role, expiry). It carries the entire user object — including fields the client doesn't need like <code>totpSecret</code>, <code>lastLoginIp</code>, and <code>deletedAt</code>. JWTs are visible to anyone who has the token. Putting your full user table row in there leaks information that should never leave the server.</p>
+      </div>
+
+      <div class="finding-box">
+        <strong>Finding 2: The password hash is MD5, and it's inside the JWT.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">The <code>password</code> field is a 32-character hex string — that's MD5 (bcrypt hashes start with <code>$2a$</code> or <code>$2b$</code> and are much longer). Juice Shop is doing this on purpose for the lesson, but it's a finding I've seen in real legacy SMB applications more than once. Anyone who intercepts this JWT has not just a session token, they have the user's password hash to take offline for cracking.</p>
+      </div>
+
+      <div class="finding-box">
+        <strong>Finding 3: There's an <code>iat</code> claim but no <code>exp</code> claim.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">The token has an issued-at timestamp but no expiration. Per the JWT spec that means the token never expires. In practice, anyone who steals this token can use it indefinitely. No rotation, no forced re-auth, no compensating control. This is a real-world JWT design pattern I've seen ship to production.</p>
+      </div>
+
+      <h2>Verifying the Hash Chain</h2>
+
+      <p>To prove the whole chain mathematically, I dropped my actual registered password into CyberChef with MD5 as the recipe. The output matched the hash from the JWT byte for byte. That confirmed every link:</p>
+
+      <ol>
+        <li>I typed a password into Chrome's registration form on Juice Shop</li>
+        <li>Juice Shop hashed it with MD5 and stored that in its database</li>
+        <li>On login, Juice Shop wrote the full user record (including that hash) into a JWT</li>
+        <li>SSLKEYLOGFILE on my workstation captured the TLS session keys</li>
+        <li>Wireshark used those keys to decrypt the captured HTTP/2 stream</li>
+        <li>The JWT pulled from the decrypted cookie decoded to plain JSON</li>
+        <li>Hashing the original password forward produced the same hex string as the one in the JWT</li>
+      </ol>
+
+      <p>Out of curiosity, I also pasted the hash into Crackstation. It came back "Not Found." That actually surprised me at first, but it makes sense — Crackstation only finds hashes for passwords already in its precomputed wordlists. My lab password was complex enough to dodge the lookup. That's a teaching moment by itself: <strong>strong passwords still matter even when the hashing is weak.</strong> The hash is technically crackable with a long enough hashcat run, but a random complex password resists the quick-lookup attack that gets used in most credential-stuffing operations.</p>
+
+      <h2>One Quick Aside on CyberChef</h2>
+
+      <p>I made a small mistake during this part that's worth flagging because it's a common confusion. My first instinct was to paste the hash <em>into the input field</em> and run MD5 on it, expecting some kind of decode. That doesn't work, because MD5 is one-way. Running MD5 on the hash just produced another MD5 of the hash. The correct workflow is to put the candidate password as the input and MD5 as the recipe, then compare the output to the target hash. Trivial point, but I bring it up because I keep seeing this exact confusion in IT spaces and it's worth the reminder: hashing is not encryption, and there's nothing to decrypt.</p>
+
+      <h2>The Detection Angle (For My MSP Brain)</h2>
+
+      <p>The reason this technique matters operationally isn't that pen testers use it — they do, but they have access by definition. The reason it matters is that some commodity infostealers abuse the exact same mechanism. If an attacker can set <code>SSLKEYLOGFILE</code> on a user's session and either read the file later or exfiltrate it, they can passively capture and decrypt that user's HTTPS traffic as long as they also have network visibility (or get the user to install a "diagnostic" tool that captures traffic locally).</p>
+
+      <p>Worth hunting for in SentinelOne DVQL, or whatever SIEM you have on the endpoint logs. The patterns to watch for:</p>
+
+      <ul>
+        <li>Process creation events with command lines that explicitly set <code>SSLKEYLOGFILE</code></li>
+        <li>Registry value modifications under <code>HKLM\System\CurrentControlSet\Control\Session Manager\Environment</code> or the per-user equivalent where the value name is <code>SSLKEYLOGFILE</code></li>
+        <li>Unusual file writes to paths that look like keylog targets (anything named <code>*.log</code> in a temp directory that's growing during active browser usage is suspicious)</li>
+      </ul>
+
+      <p>None of these is a sure indicator on its own. Developers and security researchers legitimately set the env var for debugging. But on a production workstation with no developer profile, an unprompted <code>SSLKEYLOGFILE</code> environment variable showing up is worth a second look — especially if it correlates with browser activity that follows.</p>
+
+      <h2>Lessons Learned</h2>
+
+      <p><strong>The endpoint is always inside the trust boundary, and that's by design.</strong> TLS protects against passive observers on the network path. It does not protect against the endpoints participating in the conversation, because those endpoints need the plaintext to do their job. SSLKEYLOGFILE is the formal way to share that fact with analysis tools. It's not a flaw, it's a feature, and trying to design around it usually misunderstands the threat model.</p>
+
+      <p><strong>Where you capture matters as much as what you capture.</strong> My Tailscale subnet router silently changed the route to the lab subnet, and the right capture interface turned out to be virtual rather than physical. <code>Find-NetRoute</code> is the cleanest way to answer "which interface is Windows actually using to reach this host" before committing to a capture. Without that check I'd have been staring at an empty capture filter wondering why nothing was happening.</p>
+
+      <p><strong>Self-hosting the target made the demo cleaner.</strong> If I'd captured against a real third-party site, the screenshots would have been awkward and the findings less educational. With Juice Shop running in my lab, I could plant exactly the kind of data that makes the security thesis visible, without ethical or legal noise.</p>
+
+      <p><strong>The JWT design is the real attack surface, not the TLS.</strong> Once I could see the inside of the session traffic, the encryption story stopped being interesting. The interesting stuff was the implementation choices: full user record in the token, weak hashing, no expiry. Those are the findings a real engagement would put on a report. The decryption was just the access mechanism that made them visible.</p>
+
+      <p><strong>Strong passwords still matter even when the hashing is broken.</strong> Crackstation didn't find my MD5 hash because the underlying password wasn't in its precomputed tables. The hash is technically crackable with sufficient compute, but most credential-recovery attacks aren't going to spend GPU-hours on a single hash — they're going to do rainbow table lookups and move on to the next victim. Complexity defeats that lookup even when the hashing algorithm is indefensible.</p>
+
+      <h2>Conclusion</h2>
+
+      <p>The video that kicked this off wasn't wrong, exactly, but the framing buried the lesson. "Wireshark can decrypt HTTPS if TLS key logging is enabled" makes the technique sound like a vulnerability or a clever trick. It's neither. It's a debugging feature in every modern TLS stack that exists because endpoints sometimes need to share their session keys with analysis tools running locally. The "trick" is being one of the endpoints, which means having the plaintext you're trying to look at.</p>
+
+      <p>What's actually worth taking from this is the way it forces clarity on what TLS does. TLS protects traffic between endpoints from third parties on the network in between. It doesn't, and was never trying to, hide the plaintext from the endpoints that are part of the conversation. Once that's clear, SSLKEYLOGFILE makes sense as an obvious mechanism, infostealer abuse of it makes sense as a real threat, and the implementation findings inside the decrypted session (JWT design, password hashing, missing expiry) make sense as the real attack surface in most modern web apps.</p>
+
+      <p>If you've got a homelab and an hour, this is a good build to run yourself. It reframed how I explain TLS to people, and the next time I'm in a conversation where someone says "but it's over HTTPS so it's safe," I'll have a screenshot that says otherwise.</p>
+
+      <div class="blog-tags">
+        <span class="blog-tag">tls</span>
+        <span class="blog-tag">wireshark</span>
+        <span class="blog-tag">network-analysis</span>
+        <span class="blog-tag">homelab</span>
+        <span class="blog-tag">juice-shop</span>
+        <span class="blog-tag">jwt</span>
+        <span class="blog-tag">security</span>
+        <span class="blog-tag">encryption</span>
+        <span class="blog-tag">tailscale</span>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorworks.dev · All rights reserved</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
