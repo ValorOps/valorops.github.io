@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Friends, Brothers (& sisters), Countryman.. - Dillan Valor</title>
+  <meta name="description" content="A heart-to-heart with the MSP engineers and security hobbyists carrying the weight of the gap our industry won't fix. Not a vendor critique. A community message.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+  <link rel="shortcut icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon-256x256.png">
+
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    .blog-header {
+      background: var(--bg-primary);
+      padding: 2rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .blog-meta { display: flex; gap: 1.5rem; flex-wrap: wrap; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+    .blog-meta span { display: flex; align-items: center; gap: 0.5rem; }
+    .blog-content { max-width: 800px; margin: 0 auto; padding: 3rem 1.5rem; }
+    .blog-content h2 { margin-top: 2.5rem; margin-bottom: 1rem; color: var(--text-primary); font-size: 1.75rem; }
+    .blog-content p { margin-bottom: 1.25rem; line-height: 1.7; color: var(--text-secondary); }
+    .blog-content strong { color: var(--text-primary); font-weight: 600; }
+    .blog-content hr {
+      border: none;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 2.5rem auto;
+      max-width: 200px;
+    }
+    .blog-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+    .blog-tag { background: rgba(255, 255, 255, 0.05); padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem; color: var(--text-secondary); }
+    .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent-primary); text-decoration: none; margin-bottom: 2rem; transition: gap 0.2s ease; }
+    .back-link:hover { gap: 0.75rem; }
+    .dolphins-insignia { position: absolute; right: 2rem; top: 50%; transform: translateY(-50%); width: 180px; height: auto; opacity: 0.95; transition: opacity 0.3s ease; }
+    .dolphins-insignia:hover { opacity: 1; }
+    header { position: relative; }
+    @media (max-width: 768px) {
+      .dolphins-insignia { width: 120px; right: 1rem; }
+      .blog-content { padding: 2rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="../index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../experience.html">Experience</a>
+        <a href="index.html" class="active">Blog</a>
+        <a href="../index.html#contact">Contact</a>
+      </nav>
+    </div>
+    <img src="../assets/dolphins.png" alt="Enlisted Submarine Warfare Insignia" class="dolphins-insignia">
+  </header>
+
+  <main>
+    <div class="blog-header">
+      <div class="container">
+        <a href="index.html" class="back-link">← Back to Blog</a>
+        <h1 style="margin-bottom: 1rem;">Friends, Brothers (&amp; sisters), Countryman..</h1>
+        <div class="blog-meta">
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            May 15, 2026
+          </span>
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            5 min read
+          </span>
+        </div>
+        <p class="lead" style="margin: 0;">A heart-to-heart with the MSP engineers and security hobbyists carrying the weight of the gap our industry won't fix. Not a vendor critique. A community message.</p>
+      </div>
+    </div>
+
+    <article class="blog-content">
+
+      <p>If you're reading this past 11pm because something woke you up, or because you just got off a ticket that shouldn't have needed you, or because the SOC escalated something at 2am that turned out to be nothing — I want you to know I see you.</p>
+
+      <p>That's the first thing. Before anything else, before whatever I'm trying to convince you of by the end of this post: I see you. You're tired in a specific way that doesn't show up in metrics. You're carrying something that doesn't get reported to leadership as a line item. You've been doing it long enough you don't even notice it anymore. It's just Tuesday.</p>
+
+      <p>I want to talk about why.</p>
+
+      <hr>
+
+      <p>If you've read my other posts, you know where I'm coming from. By day I'm a support engineer; I manage tickets, junior techs, projects, SaaS product researh, the whole 9 yards. I knew that one day I was going to be in cyber security, but not like this. Not as a tier-3 tech who not only has to manage a ticket queue and teach people the difference between Active Directory and Azure, but also do the threat hunting, telemetry log analysis, writing IRP's for customers in senstive verticals, and figuring out how to lock down the 10 new AI tools that get pumped out every day.</p>
+
+      <p>The tools that are supposed to protect our customers don't catch what hurts them most of the time. Not the big obvious ransomware. Sure, the tools catch that. But the slow stuff. The quiet stuff. The fifteen-second harvest from an unlocked workstation at a reception desk. The cleverly-encoded PowerShell that didn't match a signature. The behavioral pattern that looked normal because the analyst doesn't know what normal actually looks like in your environment.</p>
+
+      <p>When that stuff happens, and it does happen, we're the ones who clean it up. We do the breach investigation. We figure out the scope. We find the lateral movement. We write the post-incident report. We talk to the customer. We do all the work the MDR was supposed to do, and we do it after they've already said "yeah, looks fine to us."</p>
+
+      <p>I'm not saying it happens all the time, but it happens enough. You know this. I know this. The reason I'm writing this isn't to tell you something new. It's to tell you that you're not crazy, and you're not alone.</p>
+
+      <hr>
+
+      <p>There's another group I want to talk to before I get to my actual point.</p>
+
+      <p>The hobbyists. The people who go home from a day job and fire up your lab in your basement. The people who run CTFs on Saturday mornings. The people who file pull requests to open-source security tools at 1am. The people who post writeups on personal blogs that nobody's paying you for. The people who maintain detection rules in public repos because you couldn't stand watching them go undetected anymore. The people who learned offensive security and chose to point it at defense instead of payouts.</p>
+
+      <p>You're doing something important and you don't get told that enough. The industry talks about vendors and products and platforms. It doesn't talk about the practitioner who reverse-engineered some malware on a lunch break and pushed an IOC to a public feed that ended up protecting a hospital you'll never know about. It doesn't talk about the person who wrote the Sigma rule that's now in everyone's SIEM. It doesn't talk about the person who built the open-source tool that the for-profit vendors are quietly using under the hood.</p>
+
+      <p>That work matters. It might matter more than the vendor work, honestly, because it's the only work in this industry that scales without being throttled by a profit margin.</p>
+
+      <hr>
+
+      <p>Here's the thing I've been circling toward.</p>
+
+      <p>The exhausted engineer and the basement hobbyist are the same person. Not always literally, but structurally. We're one community. The MSP tech doing post-incident forensics at midnight is the same energy as the researcher publishing a detection rule on a personal GitHub. We're both filling the same gap. We're both doing work the commercial layer was supposed to do and didn't. We're both running on a mix of stubbornness and curiosity and a refusal to accept that "the dashboard said it was fine" should be the end of an investigation.</p>
+
+      <p>If you're in either camp, you should know the other camp is doing the same work from a different angle. The hobbyist makes the engineer's job possible by writing tools and sharing findings. The engineer makes the hobbyist's work matter by deploying it where it actually defends people. We need each other. The vendor ecosystem mostly doesn't acknowledge that, because acknowledging it would mean admitting their products aren't enough.</p>
+
+      <hr>
+
+      <p>I run my lab in my free time because I love the work. That's the honest answer. ValorWorks is just the face of what I stand for. I run it because watching an EDR miss a payload I built is the most interesting thing I've done all week. Not because the rest of it isn't stimulating or stressful, but because every time I catch something the tools missed I learn something I can use the next day at work.</p>
+
+      <p>But somewhere along the way the lab stopped being just personal. The findings turned into blog posts. The blog posts turned into a Discord. The Discord turned into a small community of people doing the same kind of work I'm doing. And I started realizing that what I thought was a hobby was the same thing every other person in that community was doing in their basement, late at night, when everyone else is asleep.</p>
+
+      <p>This is the real security industry. Not the vendor floor at conferences. Not the marketing copy. Not the dashboards. The real industry is people in homelabs, writing detection rules, testing the things no vendor will test, publishing what they find, helping each other. It's the technicians who have the nerve to challenge those 3rd party tools. It's a community held together by curiosity and grit, not by quarterly earnings calls.</p>
+
+      <hr>
+
+      <p>ValorWorks started as my personal site that was, itself, just a new avenue I wanted to learn. Learning what goes into web development and all the ways to skin that cat. I'm honestly not sure what it's becoming yet. But the more nights I spend doing the gap-filling work both at the day job and in my lab, the more I think it might become a place for the rest of us. The engineers who are tired. The hobbyists who are doing the work that doesn't show up in any product roadmap or ROI projections. The people who think there has to be something better than what the channel is selling, and are quietly building it themselves.</p>
+
+      <p>If that's you, come find me. Either here at valorworks.dev or on the Discord linked. I don't have a product to sell you. I don't have a course to enroll you in. I just have a lab, some scars from the day job, and a belief that the people quietly filling the gap are the ones who matter most in this industry right now.</p>
+
+      <p>Keep going. The work you're doing matters. Even when nobody at the vendor level sees it. Especially then.</p>
+
+      <div class="blog-tags">
+        <span class="blog-tag">community</span>
+        <span class="blog-tag">msp</span>
+        <span class="blog-tag">perspective</span>
+        <span class="blog-tag">cybersecurity</span>
+        <span class="blog-tag">hobbyist</span>
+        <span class="blog-tag">mdr</span>
+        <span class="blog-tag">valorworks</span>
+        <span class="blog-tag">industry</span>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorworks.dev · All rights reserved</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
