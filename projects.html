@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Projects — Dillan Valor</title>
-  <meta name="description" content="Real-world cybersecurity and infrastructure projects: vulnerability assessments, cloud migrations, network hardening, and homelab experiments.">
-  
+  <meta name="description" content="Active security research, homelab infrastructure, detection engineering, and MSP tooling projects.">
+
   <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="favicon-256x256.png">
-  
+
   <link rel="stylesheet" href="assets/styles.css">
   <style>
     /* Dolphins insignia styling */
@@ -25,15 +25,15 @@
       opacity: 0.95;
       transition: opacity 0.3s ease;
     }
-    
+
     .dolphins-insignia:hover {
       opacity: 1;
     }
-    
+
     header {
       position: relative;
     }
-    
+
     @media (max-width: 768px) {
       .dolphins-insignia {
         width: 120px;
@@ -61,125 +61,275 @@
     <section>
       <div class="container">
         <div class="section-header">
-          <div class="kicker">Real-World Projects</div>
-          <h1>Things I'm Working On</h1>
-          <p class="muted">I'm always looking for new things to dive into and learn</p>
+          <div class="kicker">Active Work</div>
+          <h1>What I'm Building</h1>
+          <p class="muted">Security research, homelab infrastructure, detection engineering, and the tooling that ties it all together.</p>
         </div>
 
         <div class="card-grid">
+
+          <!-- BadUSB Pico W Research -->
           <article class="card">
             <div class="card-header">
-              <h3>Proxmox Home Server with pfSense &amp; Docker</h3>
-              <span class="card-meta">Virtualization · Networking · Home Lab</span>
+              <h3>$18 BadUSB Research Series</h3>
+              <span class="card-meta">Red Team · Hardware · In Progress</span>
             </div>
             <p>
-              <strong>Environment:</strong> Dell PowerEdge server, Proxmox VE, pfSense, Ubuntu Server<br>
-              Built a full virtualization lab from a retired office server. Configured network segmentation with pfSense, deployed Docker services via Portainer, and created a NAS with OpenMediaVault for centralized storage.
+              <strong>Environment:</strong> Raspberry Pi Pico W, CircuitPython 10.2.1, isolated LAB-DETONATE VLAN<br>
+              Built a working credential-harvesting BadUSB out of a $14 Pico W and a 3D-printed case. The full payload extracts cleartext WiFi profiles, Credential Manager entries, and browser data in 15 seconds. Used the build to stress-test enterprise EDR — Huntress flagged EICAR instantly and missed the actual LotL attack chain completely.
             </p>
             <ul>
-              <li>Installed Proxmox VE via iDRAC remote ISO mount, configured ZFS RAID storage</li>
-              <li>Deployed pfSense VM to segment lab traffic from home LAN with dedicated firewall rules</li>
-              <li>Solved ISP router static route limitations with manual Windows routing</li>
-              <li>Built Ubuntu Server VM running Docker + Portainer; migrated Uptime Kuma from Windows host</li>
-              <li>Created Debian + OpenMediaVault NAS with SMB/NFS shares for ISOs, backups, and container data</li>
-              <li><strong>Result:</strong> Fully functional segregated home lab with firewall, container management, and private cloud storage</li>
+              <li>Pivoted from a Psychson-reflashed thumb drive (modern USB 3.x controllers killed that vector) to a Pico W with CircuitPython HID emulation</li>
+              <li>Wrote a from-scratch DuckyScript interpreter with a GP0 dev-mode jumper so the device is safe to edit on your own machine</li>
+              <li>Four progressive payloads: notepad proof-of-concept → system recon → intel gathering → <code>netsh wlan show profile name=* key=clear</code></li>
+              <li><strong>Roadmap:</strong> Part 2 (keyboard layout handling, stealthier output), Part 3 (WiFi-triggered payload delivery via the onboard radio), Part 4 (defensive detection engineering for this attack class)</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">BadUSB</span>
+              <span class="tag">CircuitPython</span>
+              <span class="tag">EDR Testing</span>
+              <span class="tag">Red Team</span>
+              <span class="tag">In Progress</span>
+            </div>
+          </article>
+
+          <!-- TLS Decryption Lab -->
+          <article class="card">
+            <div class="card-header">
+              <h3>TLS Decryption &amp; Offline Password Cracking Lab</h3>
+              <span class="card-meta">Network Analysis · Cryptography</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> OWASP Juice Shop, Nginx Proxy Manager, mkcert, Wireshark, Hashcat, RTX 3060 + SecLists<br>
+              End-to-end lab that decrypts a self-hosted HTTPS session with <code>SSLKEYLOGFILE</code>, pulls a JWT out of the captured cookie, extracts the MD5 password hash embedded inside, and runs progressive Hashcat attacks against it. The cracking arc ended up being the real lesson.
+            </p>
+            <ul>
+              <li>Stood up Juice Shop behind NPM with a locally-trusted mkcert cert, then routed capture traffic correctly through the Tailscale subnet router</li>
+              <li>Decoded the JWT to find three findings: full user record inside the token, MD5 password hash in plaintext, no <code>exp</code> claim</li>
+              <li>Hashcat progression: Crackstation lookup → rockyou straight → rockyou + best66 → rockyou + dive (1.4T candidates exhausted in 3 minutes on a 3060) → all failed</li>
+              <li><strong>Result:</strong> A hand-built leetspeak rule modeling the exact password structure cracked it in 1 second. Thesis: every password has a "right rule" — generic strength isn't absolute strength</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">TLS</span>
+              <span class="tag">Wireshark</span>
+              <span class="tag">Hashcat</span>
+              <span class="tag">JWT</span>
+              <span class="tag">Homelab</span>
+            </div>
+          </article>
+
+          <!-- Personal PC Tenant Onboarding -->
+          <article class="card">
+            <div class="card-header">
+              <h3>Personal PC Onboarding to ValorWorks Tenant</h3>
+              <span class="card-meta">Endpoint Management · M365</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> Windows 11 Pro, ValorWorks tenant on Business Premium, Intune, Defender for Business, RoboShadow<br>
+              Turned a personal Win 11 Home box into a properly managed endpoint inside my own tenant. Real dogfooding lab for validating tenant-side configurations — Conditional Access, ASR rules, compliance baselines — against a machine I own before any client environment sees them.
+            </p>
+            <ul>
+              <li>Pro upgrade, stale Workplace-Join cleanup (a 10-year device cert from an old employer was still in the TPM), Entra Join with verified Intune auto-enrollment</li>
+              <li>Profile migration with ForensiT Profwiz; handled the TPM/NGC container mismatch on first sign-in via <code>certutil -deleteHelloContainer</code></li>
+              <li>Defender for Business onboarded via local script with full agent telemetry verified in the Defender XDR portal</li>
+              <li>Added RoboShadow agent for vuln management; documented Defender + vuln-scanner coexistence behavior to use as a baseline for future client deployments</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">Intune</span>
+              <span class="tag">Defender</span>
+              <span class="tag">Entra</span>
+              <span class="tag">RoboShadow</span>
+              <span class="tag">M365</span>
+            </div>
+          </article>
+
+          <!-- Wazuh SIEM -->
+          <article class="card">
+            <div class="card-header">
+              <h3>Wazuh SIEM on Proxmox</h3>
+              <span class="card-meta">Detection Engineering · SIEM</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> Ubuntu 22.04 LTS on Proxmox, Wazuh all-in-one (Manager + Indexer + Dashboard), Windows agent<br>
+              Self-hosted SIEM running in the home lab as a foundation for detection engineering practice. Windows endpoint enrolled and reporting; syscollector inventory, file integrity monitoring, MITRE ATT&amp;CK mapping, and host-based vulnerability detection all operational.
+            </p>
+            <ul>
+              <li>Worked through indexer startup timeout issues (OpenSearch recovery time on lower-spec VMs), version-mismatch enrollment failures, and the reserved-admin password reset path</li>
+              <li>Endpoint visibility: OS/software/service inventory, Windows Event Log ingest, PowerShell activity when configured, real-time alerting</li>
+              <li><strong>Next:</strong> writing custom detection rules tied to the threat actor TTPs surfacing in real MSP incidents, agent onboarding for additional lab endpoints</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">Wazuh</span>
+              <span class="tag">SIEM</span>
+              <span class="tag">Detection Engineering</span>
+              <span class="tag">Proxmox</span>
+            </div>
+          </article>
+
+          <!-- Home Network -->
+          <article class="card">
+            <div class="card-header">
+              <h3>Home Network — UDR7 + VLAN Segmentation</h3>
+              <span class="card-meta">Networking · In Progress</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> Ubiquiti UDR7, UniFi PoE switch, U7-LR APs, pfSense (lab isolation)<br>
+              Whole-house network rebuild with structured Ethernet runs throughout the home and a properly segmented VLAN architecture. UDR7 anchors the front door with CyberSecure/IPS in active configuration; a pfSense instance sits behind it isolating the detonation lab from production home traffic.
+            </p>
+            <ul>
+              <li>Structured cabling project complete — every room reachable with hardwired uplinks</li>
+              <li>VLAN design separates IoT, trusted home, lab, and management traffic with explicit allow/deny rules</li>
+              <li>U7-LR APs handle wireless coverage; PoE switch consolidates power and cabling into the rack</li>
+              <li><strong>Status:</strong> CyberSecure/IPS tuning still in progress, working through false-positive triage on legitimate lab traffic</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">Ubiquiti</span>
+              <span class="tag">UDR7</span>
+              <span class="tag">pfSense</span>
+              <span class="tag">VLAN</span>
+              <span class="tag">In Progress</span>
+            </div>
+          </article>
+
+          <!-- Homelab Compute Stack -->
+          <article class="card">
+            <div class="card-header">
+              <h3>Homelab Compute &amp; Storage Stack</h3>
+              <span class="card-meta">Infrastructure · Virtualization</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> 18U rack, Dell R630 (Proxmox host "Valor"), Raspberry Pi nodes, Ugreen DXP4800 Plus NAS<br>
+              Consolidated rack build that replaced an earlier bare-shelf setup. The R630 runs every primary VM in the lab — Wazuh, Ubuntu workloads, pfSense, Docker hosts. Storage is handled by the Ugreen NAS in SHR with Seagate IronWolf 8TB drives.
+            </p>
+            <ul>
+              <li>R630 Proxmox host with iDRAC for remote management, ZFS storage, and a steady catalog of lab VMs</li>
+              <li>Raspberry Pi nodes handle lightweight always-on workloads (DNS, monitoring, threat intel feeds)</li>
+              <li>Ugreen DXP4800 Plus NAS with SHR/RAID redundancy and Tailscale-based remote access from anywhere</li>
+              <li>Cabling, PDU, UPS, and patch panel all rack-mounted; the office closet now looks like a real lab instead of a hobbyist pile</li>
             </ul>
             <div class="tags">
               <span class="tag">Proxmox</span>
-              <span class="tag">pfSense</span>
-              <span class="tag">Docker</span>
+              <span class="tag">Dell R630</span>
               <span class="tag">NAS</span>
-              <span class="tag">Home Lab</span>
+              <span class="tag">Tailscale</span>
+              <span class="tag">Homelab</span>
             </div>
           </article>
 
+          <!-- Discord Ransomware Threat Intel Feed -->
           <article class="card">
             <div class="card-header">
-              <h3>Pi-hole DNS Filtering (Docker on Windows)</h3>
-              <span class="card-meta">Docker · DNS · Home Lab</span>
+              <h3>Ransomware Threat Intel Feed</h3>
+              <span class="card-meta">Threat Intelligence · Automation</span>
             </div>
             <p>
-              <strong>Environment:</strong> Home network, Windows host with Docker Desktop<br>
-              Deployed Pi-hole in Docker as network-wide DNS filter. Overcame Docker NAT limitations and VPN interference to successfully block ads, trackers, and malicious domains.
+              <strong>Environment:</strong> GitHub Actions, ransomware.live API, Discord webhook<br>
+              Automated pipeline that pulls fresh victim disclosures from ransomware.live and posts them to a Discord channel. Low-maintenance, low-cost signal for tracking active campaigns and spotting patterns across leak sites — useful for awareness when an industry-specific operator starts cycling.
             </p>
             <ul>
-              <li>Deployed Pi-hole container, configured upstream DNS (Cloudflare), opened Windows firewall ports</li>
-              <li>Added curated blocklists: StevenBlack, AdGuard, Phishing Army—<strong>~480k domains blocked</strong></li>
-              <li>Troubleshot VPN (Twingate) interference breaking upstream DNS queries</li>
-              <li>Documented Docker NAT limitations preventing per-device policies and planned migration to dedicated hardware</li>
-              <li><strong>Result:</strong> Working network-wide ad/tracker blocking, clear documentation for Phase 2 improvements</li>
+              <li>GitHub Actions runs on a schedule, no infrastructure to maintain</li>
+              <li>De-duplicates against previously-seen entries so the channel doesn't fill with repeats</li>
+              <li>Provides early situational awareness for industries adjacent to the MSP client base</li>
             </ul>
             <div class="tags">
-              <span class="tag">DNS Security</span>
-              <span class="tag">Docker</span>
-              <span class="tag">Home Lab</span>
-              <span class="tag">Troubleshooting</span>
+              <span class="tag">Threat Intel</span>
+              <span class="tag">GitHub Actions</span>
+              <span class="tag">Automation</span>
+              <span class="tag">Ransomware</span>
             </div>
           </article>
 
+          <!-- Sigma Threat-Hunting Skill Pack -->
           <article class="card">
             <div class="card-header">
-              <h3>Multi-Boot USB Toolkit with Ventoy</h3>
-              <span class="card-meta">System Recovery</span>
+              <h3>Sigma Threat-Hunting Skill Pack</h3>
+              <span class="card-meta">Detection Engineering · AI-Assisted Investigation</span>
             </div>
             <p>
-              <strong>Environment:</strong> MSP support across diverse client systems<br>
-              Created single multi-boot USB with Ventoy holding Windows installers, Linux distros, and rescue tools. Drag-and-drop ISO management—no re-flashing required.
+              <strong>Environment:</strong> AI-assisted investigation workflow, multi-vendor SOC stack<br>
+              A structured detection-engineering skill module tailored to a typical mid-market MSP stack. Encodes investigation workflow, query translation from Sigma rules to vendor-specific syntax, and MITRE ATT&amp;CK mapping for the TTPs that actually show up in real incidents.
             </p>
             <ul>
-              <li>Deployed Ventoy to USB, added Windows 10/11 ISOs, Kali Linux, rescue environments</li>
-              <li>Used regularly for OS installs, system recovery, and live forensics across 40+ clients</li>
-              <li><strong>Result:</strong> One "Swiss Army knife" USB replacing stack of drives, massive time-saver in MSP work</li>
+              <li>Sigma rule translation to SentinelOne Deep Visibility (DVQL) and Todyl SIEM query syntax</li>
+              <li>Stack-aware: SentinelOne, Blackpoint MDR, Todyl, ProofPoint, FortiGate, M365 / Defender</li>
+              <li>Used during live triage to accelerate "what does this look like in our telemetry" decisions</li>
             </ul>
             <div class="tags">
-              <span class="tag">System Recovery</span>
-              <span class="tag">Efficiency Tool</span>
+              <span class="tag">Sigma</span>
+              <span class="tag">Threat Hunting</span>
+              <span class="tag">SentinelOne</span>
+              <span class="tag">MITRE ATT&amp;CK</span>
+            </div>
+          </article>
+
+          <!-- PowerShell MSP Toolkit -->
+          <article class="card">
+            <div class="card-header">
+              <h3>PowerShell MSP Toolkit</h3>
+              <span class="card-meta">Tooling · Automation</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> Daily MSP support workflow<br>
+              Long-running personal toolkit built over time from real on-the-clock troubleshooting. Each module exists because a specific recurring pain point demanded it, not because the toolkit needed another feature.
+            </p>
+            <ul>
+              <li><strong>Network scanner</strong> — fast subnet discovery with port and service identification</li>
+              <li><strong>System info collector</strong> — one-shot endpoint context dump for tickets and escalations</li>
+              <li><strong>BSOD reporter</strong> — parses minidumps and surfaces likely driver/module culprits</li>
+              <li><strong>Windows Repair Toolkit</strong> — orchestrated SFC / DISM / WinRE recovery flow with sane defaults</li>
+              <li>Plus a multi-boot Ventoy USB carrying Windows installers, Linux distros, and rescue environments for field work</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">PowerShell</span>
+              <span class="tag">Automation</span>
               <span class="tag">MSP</span>
+              <span class="tag">Tooling</span>
             </div>
           </article>
 
+          <!-- ValorAide -->
+          <article class="card">
+            <div class="card-header">
+              <h3>ValorAide — AI Command Center</h3>
+              <span class="card-meta">Personal Project · In Progress</span>
+            </div>
+            <p>
+              <strong>Environment:</strong> Personal flagship project under the ValorWorks umbrella<br>
+              An AI Command Center concept built around practical, day-to-day workflow integration. The goal is something that earns its keep through real productivity gains rather than novelty — assistive, context-aware, and grounded in the kind of routine work that fills an engineer's calendar.
+            </p>
+            <ul>
+              <li>Active development; more details rolling out as the project matures past the prototype stage</li>
+              <li>Focused on workflow integration over chat-style interaction</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">AI</span>
+              <span class="tag">ValorWorks</span>
+              <span class="tag">In Progress</span>
+            </div>
+          </article>
+
+          <!-- Kali Linux on Chromebook -->
           <article class="card">
             <div class="card-header">
               <h3>Kali Linux on Chromebook</h3>
               <span class="card-meta">Security Tooling · Linux</span>
             </div>
             <p>
-              <strong>Environment:</strong> Personal security lab<br>
-              Converted a Chromebook into a dedicated Kali Linux security lab by replacing ChromeOS entirely. Configured firmware, optimized for Chromebook hardware, and built a curated offensive security toolkit.
+              <strong>Environment:</strong> Repurposed Chromebook, Kali on bare metal<br>
+              Converted a Chromebook into a dedicated Kali Linux security workstation by replacing ChromeOS entirely. Unlocked firmware, flashed Kali to internal storage, and verified hardware compatibility for a portable, focused offensive-security platform that stays separate from daily-driver systems.
             </p>
             <ul>
-              <li>Unlocked firmware, flashed Kali to internal storage, verified hardware compatibility (Wi-Fi, trackpad, power)</li>
-              <li>Customized terminal, keybindings, and workflow for portable security lab</li>
-              <li>Maintains separation from daily-driver systems for focused security practice and offensive tooling</li>
+              <li>Firmware unlock, full Kali install, hardware validation (Wi-Fi, trackpad, suspend/resume, power)</li>
+              <li>Customized terminal, keybindings, and toolchain for a no-distraction practice environment</li>
+              <li>Kept intentionally air-gapped from production work for safe offensive tooling and CTF practice</li>
             </ul>
             <div class="tags">
+              <span class="tag">Kali Linux</span>
               <span class="tag">Offensive Security</span>
-              <span class="tag">Linux</span>
               <span class="tag">Custom Build</span>
             </div>
           </article>
 
-          <article class="card">
-            <div class="card-header">
-              <h3>Raspberry Pi 5 NVMe NAS</h3>
-              <span class="card-meta">In Progress</span>
-            </div>
-            <p>
-              <strong>Environment:</strong> Home lab infrastructure<br>
-              Designing a compact, low-power Raspberry Pi 5-based NAS and media server with 8TB+ NVMe storage. Planned to run SMB/NFS shares, media streaming (Plex/Jellyfin), and Dockerized homelab services.
-            </p>
-            <ul>
-              <li>Planning NVMe HAT configuration, thermals, and case design for 24/7 operation</li>
-              <li>Evaluating single-disk simplicity vs. redundancy/mirroring for data protection</li>
-              <li>Foundation for self-hosted monitoring, security tools, and media library</li>
-            </ul>
-            <div class="tags">
-              <span class="tag">NAS</span>
-              <span class="tag">Self-Hosted</span>
-              <span class="tag">Raspberry Pi</span>
-              <span class="tag">In Progress</span>
-            </div>
-          </article>
         </div>
       </div>
     </section>
