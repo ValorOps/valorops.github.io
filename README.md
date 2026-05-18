@@ -1,13 +1,13 @@
-# valorworks.dev
+# ValorOps.dev
 
 Professional portfolio site for Dillan Valor - IT Engineer & Cybersecurity Specialist
 
 
 ## 📞 Contact
 
-- Email: dillan@valorworks.dev
+- Email: dillan@valorops.dev
 - LinkedIn: [linkedin.com/in/dillan-valor](https://linkedin.com/in/dillan-valor)
-- GitHub: [github.com/ValorWorks.dev](https://github.com/ValorWorks-dev)
+- GitHub: [github.com/ValorOps](https://github.com/ValorOps)
 
 ---
 
