@@ -6,7 +6,6 @@ Professional portfolio site for Dillan Valor - IT Engineer & Cybersecurity Speci
 ## 📞 Contact
 
 - Email: dillan@valorops.dev
-- LinkedIn: [linkedin.com/in/dillan-valor](https://linkedin.com/in/dillan-valor)
 - GitHub: [github.com/ValorOps](https://github.com/ValorOps)
 
 ---
