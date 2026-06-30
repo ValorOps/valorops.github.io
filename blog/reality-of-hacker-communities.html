@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Reality of Hacker Communities - Dillan Valor</title>
+  <meta name="description" content="A casual Discord link became a full triage exercise. Joe Sandbox, urlscan.io, BL Networks, BTCPay Server abuse, and what it says about who's actually in the room with you.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+  <link rel="shortcut icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon-256x256.png">
+
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    /* Blog post specific styles */
+    .blog-header {
+      background: var(--bg-primary);
+      padding: 2rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .blog-meta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+
+    .blog-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .blog-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+
+    .blog-content h2 {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      font-size: 1.75rem;
+    }
+
+    .blog-content h3 {
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+      font-size: 1.35rem;
+    }
+
+    .blog-content p {
+      margin-bottom: 1.25rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .blog-content ul, .blog-content ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+
+    .blog-content li {
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .blog-content strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .blog-content code {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      color: var(--accent-primary);
+      word-break: break-all;
+    }
+
+    .blog-content pre {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .blog-content pre code {
+      background: none;
+      padding: 0;
+      color: var(--text-secondary);
+    }
+
+    .blog-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .blog-tag {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent-primary);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      transition: gap 0.2s ease;
+    }
+
+    .back-link:hover {
+      gap: 0.75rem;
+    }
+
+    .dolphins-insignia {
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 180px;
+      height: auto;
+      opacity: 0.95;
+      transition: opacity 0.3s ease;
+    }
+
+    .dolphins-insignia:hover {
+      opacity: 1;
+    }
+
+    header {
+      position: relative;
+    }
+
+    .stack-list {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem 1.5rem 1.5rem 2.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .stack-list li {
+      margin-bottom: 0.75rem;
+    }
+
+    .stack-list li:last-child {
+      margin-bottom: 0;
+    }
+
+    .ioc-table-wrap {
+      margin: 1.5rem 0 2rem;
+      overflow-x: auto;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+
+    .ioc-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+
+    .ioc-table th {
+      text-align: left;
+      padding: 0.85rem 1rem;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-primary);
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+    }
+
+    .ioc-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+
+    .ioc-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .ioc-table td:first-child {
+      white-space: nowrap;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .ioc-table code {
+      word-break: break-all;
+    }
+
+    .pull-quote {
+      border-left: 3px solid var(--accent-primary);
+      padding: 0.25rem 0 0.25rem 1.25rem;
+      margin: 1.75rem 0;
+      color: var(--text-primary);
+      font-style: italic;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 768px) {
+      .dolphins-insignia {
+        width: 120px;
+        right: 1rem;
+      }
+
+      .blog-content {
+        padding: 2rem 1rem;
+      }
+
+      .ioc-table th, .ioc-table td {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="../index.html" class="logo" aria-label="Dillan Valor - Home">DILLAN <span>VALOR</span></a>
+      <nav aria-label="Main navigation">
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../experience.html">Experience</a>
+        <a href="index.html" class="active">Blog</a>
+        <a href="../index.html#contact">Contact</a>
+      </nav>
+    </div>
+    <img src="../assets/dolphins.png" alt="Enlisted Submarine Warfare Insignia" class="dolphins-insignia">
+  </header>
+
+  <main>
+    <div class="blog-header">
+      <div class="container">
+        <a href="index.html" class="back-link">
+          ← Back to Blog
+        </a>
+        <h1 style="margin-bottom: 1rem;">The Reality of Hacker Communities</h1>
+        <div class="blog-meta">
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            June 30, 2026
+          </span>
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            6 min read
+          </span>
+        </div>
+        <p class="lead" style="margin: 0;">A casual Discord link became a full triage exercise. Joe Sandbox, urlscan.io, BL Networks, BTCPay Server abuse, and what it all says about who is actually in the room with you.</p>
+      </div>
+    </div>
+
+    <article class="blog-content">
+      <p>Hacker-community Discords are some of the best places on the internet to learn. Somebody asks a question, somebody else drops a link, and a newcomer walks away with tools they would not have found on their own. That low-friction tool-trade is the whole point of being there.</p>
+
+      <p>It is also why some of the most dangerous links you will ever see show up in the same channels. The norm that gets a beginner a useful OSINT bookmark is the same norm that gets them a credential-harvesting page wrapped in a friendly recommendation. You cannot always tell which is which from the message.</p>
+
+      <p>I had one of those moments this week. A newcomer in a community channel said they were getting into security and asked what tools and resources people use. I dropped my OSINT and web-recon bookmarks. A few messages later, another member posted <code>hxxps://wormgpt[.]zip</code> and described it as a helpful AI tool for red team operations.</p>
+
+      <p>I do not know what that person was thinking. They could have grabbed the link from somewhere, taken the marketing at face value, and recommended it without checking. Or they could have known exactly what was behind it and recommended it anyway, with a beginner watching. From one Discord message, you cannot tell. That is the reality of these communities. Good and bad share the same room, and they look the same in chat.</p>
+
+      <p>So I pulled the URL into urlscan.io and ran the rest through everything else I had, because "helpful red team tool" from an unverified rec is not a recommendation I take on faith, especially when the brand on the page is named after a piece of cybercrime LLM software. What came out the other end was a fully productized scam operation, with every layer picked for anonymity, irreversibility, or takedown resistance.</p>
+
+      <h2>The first ten seconds of triage</h2>
+
+      <p>Three things stood out before I touched a sandbox.</p>
+
+      <p>The TLD was <code>.zip</code>. Google opened that TLD to the public in 2023 and it immediately became abuse central because browsers and chat apps autolink filenames like <code>report.zip</code> into clickable URLs. Anything serious on <code>.zip</code> is rare. Anything on <code>.zip</code> calling itself a hacking tool is a red flag by default.</p>
+
+      <p>The domain was ten days old. New domains are not automatically bad, but new domains pretending to sell paid software are.</p>
+
+      <p>The brand was WormGPT. The original WormGPT was a jailbroken GPT-J variant sold on hacking forums in 2023 for BEC, phishing, and malware authoring. The name has criminal history. Anything carrying it and marketing itself as an "ethical hacking AI" is either the original tool, a clone, or a lure pretending to be one.</p>
+
+      <p>A Malwarebytes reputation check came back suspicious with the 10-day-old domain age called out. That was enough for me to recommend nobody touch it. But I wanted to know what was actually on the other side, especially with a newcomer in the channel who might not have known better.</p>
+
+      <h2>Joe Sandbox tells the rest</h2>
+
+      <p>Detonating the URL in Joe Sandbox gave me the verdict: phishing on Windows, score 48 out of 100, confidence 100%. The AI signature fired with "AI detected malicious page (phishing or scam)."</p>
+
+      <p>The attack is a credential harvest stacked on top of a crypto theft. The <code>/buy</code> page presents a fake checkout asking for username and password, plus a delivery channel (Telegram, Discord, or email) for where you want your "credentials" sent. That is identity theft pretending to be a delivery option. Once you hit "Proceed to Bitcoin Payment," an iframe loads a payment modal from <code>btcpay[.]amatuerfans[.]com</code> and the page fires the browser's <code>bitcoin:</code> URI handler with an attacker-controlled wallet and a 0.00100614 BTC amount.</p>
+
+      <p>That is roughly a hundred dollars. Small enough that someone curious enough to find this page might actually pay it.</p>
+
+      <h2>The pivot is where it gets interesting</h2>
+
+      <p><code>wormgpt[.]zip</code> is the lure. The infrastructure is <code>amatuerfans[.]com</code>. That domain was registered seven weeks before the storefront went live, by a registrant in Saint Kitts and Nevis, through Tucows, with Cloudflare DNS in front. The fact that the payment backend was prepped a month and a half before the storefront went up tells you this is not somebody's first try.</p>
+
+      <p>The backend IP is <code>168.100.10.129</code>. It is hosted at BL Networks, ASN 399629, in Amsterdam. BL Networks is the public name for <a href="https://bitlaunch.io/" target="_blank" rel="noopener">BitLaunch.io</a>, a VPS reseller that advertises "anonymous Bitcoin VPS." You pay hourly in BTC, LTC, or ETH, and they front DigitalOcean, Linode, or Vultr behind the scenes so the underlying provider never sees the customer. <a href="https://blog.bushidotoken.net/2025/02/investigating-anonymous-vps-services.html" target="_blank" rel="noopener">BushidoToken's 2025 CTI research</a> linked BitLaunch to Cobalt Strike C2 infrastructure and ransomware operations.</p>
+
+      <p>The SSL cert on the box is self-signed with subject <code>CN=letsencrypt-nginx-proxy-companion</code>. That is the default fallback cert from the <code>jrcs/nginx-proxy</code> plus <code>acme-companion</code> Docker stack, which is the exact deployment pattern in the official BTCPay Server install script. Both port 80 and 443 return 503 to direct IP visits because nginx is doing virtual-host routing and refuses unknown <code>Host:</code> headers. Translation: this same server is probably hosting payment backends for more than one front domain. I could not enumerate them from free tools, but Censys queries on the cert subject or Shodan queries on the SSH host key fingerprint (<code>cc352487ca550a2e55cb1d4d118350405bd261c7a51deffb6e07fbc67be4be0e</code>) would likely get there.</p>
+
+      <h2>The operator stack</h2>
+
+      <p>Look at it as a single design:</p>
+
+      <ul class="stack-list">
+        <li><strong>VPS:</strong> BitLaunch, paid in BTC. No KYC.</li>
+        <li><strong>TLS at the edge:</strong> Cloudflare on the storefront, self-signed on the origin. The real IP stays hidden.</li>
+        <li><strong>Payment processor:</strong> self-hosted BTCPay Server. There is no third party to issue a chargeback or freeze an account.</li>
+        <li><strong>Front domain:</strong> cheap newly-registered domain on <code>.zip</code>, through Tucows. Disposable.</li>
+        <li><strong>Backend domain:</strong> separately registered, kept off the storefront's takedown blast radius.</li>
+        <li><strong>Payout:</strong> a fresh BTC wallet with no public history yet.</li>
+      </ul>
+
+      <p>Every layer is replaceable except the BTC wallet. When <code>wormgpt[.]zip</code> gets reported and goes down, the actor spins up a new storefront, points it at the same BTCPay backend, and keeps going. <a href="https://blog.btcpayserver.org/bitcoin-bonus-scam/" target="_blank" rel="noopener">BTCPay's own team has documented this exact pattern</a> on their official blog under the "Bitcoin Bonus" scam name. The storefront is disposable. The backend is the real infrastructure.</p>
+
+      <h2>Back to the community</h2>
+
+      <p>I dropped the findings back into the channel. A few people thanked me. The newcomer got to watch the triage happen in real time, which is probably more useful than the bookmarks I posted in the first place. That part felt good.</p>
+
+      <p>What I keep thinking about is the gap between the two messages. One person showed up to help a beginner. Another person recommended a credential-harvesting page as a useful red team tool. They were sitting in the same channel, talking to the same new person, and from the outside the messages looked identical. Both were framed as "here is something you should check out."</p>
+
+      <p class="pull-quote">That gap is the reality of hacker communities. Most people are there to learn or to teach. Some are there to phish or to recruit. Most of the time you cannot tell the difference from a single chat message, and a brand-new member definitely cannot.</p>
+
+      <p>A few rules I have settled on:</p>
+
+      <p>Treat every shared link as untrusted, including links from people you trust. They might be sharing it the same way you would, as "look at this." That is not an endorsement, it is a request for triage.</p>
+
+      <p>Run it through a sandbox before clicking. Joe Sandbox, ANY.RUN, and urlscan.io all have free tiers. Two minutes of detonation beats two days of incident response.</p>
+
+      <p>Share the verdict back. The community gave you the link. Give them the finding. It costs nothing, it teaches the newcomers what good triage looks like, and it makes the room incrementally safer for the next person who walks in green.</p>
+
+      <p>And if the link turns out to be productized criminal infrastructure with a six-layer anonymity stack behind it, write it up. Somebody else will hit the same lure next week.</p>
+
+      <h2>IOCs (defanged)</h2>
+
+      <div class="ioc-table-wrap">
+        <table class="ioc-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Indicator</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Domain</td>
+              <td><code>wormgpt[.]zip</code></td>
+            </tr>
+            <tr>
+              <td>Domain</td>
+              <td><code>btcpay[.]amatuerfans[.]com</code></td>
+            </tr>
+            <tr>
+              <td>URL</td>
+              <td><code>hxxps://wormgpt[.]zip/buy</code></td>
+            </tr>
+            <tr>
+              <td>IP</td>
+              <td><code>172.67.186.136</code> (Cloudflare-fronted storefront)</td>
+            </tr>
+            <tr>
+              <td>IP</td>
+              <td><code>168.100.10.129</code> (BTCPay origin, BitLaunch / BL Networks NL)</td>
+            </tr>
+            <tr>
+              <td>ASN</td>
+              <td>AS399629 (BL Networks / BitLaunch)</td>
+            </tr>
+            <tr>
+              <td>BTC wallet</td>
+              <td><code>bc1qexterk3gk9jg4xp2n7casau4kcpenm4dhhjsmh</code></td>
+            </tr>
+            <tr>
+              <td>BTCPay Store ID</td>
+              <td><code>7Y8bUWoUy94FfyTjCWw19peQ9VAoK1kiymTfRDxKY5jB</code></td>
+            </tr>
+            <tr>
+              <td>SSH host key</td>
+              <td><code>cc352487ca550a2e55cb1d4d118350405bd261c7a51deffb6e07fbc67be4be0e</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="blog-tags">
+        <span class="blog-tag">discord</span>
+        <span class="blog-tag">community</span>
+        <span class="blog-tag">osint</span>
+        <span class="blog-tag">threat-intel</span>
+        <span class="blog-tag">scam-analysis</span>
+        <span class="blog-tag">phishing</span>
+        <span class="blog-tag">btcpay</span>
+        <span class="blog-tag">wormgpt</span>
+        <span class="blog-tag">joe-sandbox</span>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Dillan Valor</div>
+        <div>© <span id="year"></span> valorops.dev · All rights reserved</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
