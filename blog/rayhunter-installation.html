@@ -300,7 +300,7 @@ Caused by:
 
       <p><strong>1. Enabling Telnet in the Web UI</strong></p>
       <ul>
-        <li>Navigated to http://192.168.1.1</li>
+        <li>Navigated to the gateway</li>
         <li>Went to Features → Port Filter → TELNET</li>
         <li>Enabled telnet access</li>
         <li>Result: Still no connection</li>
@@ -313,10 +313,10 @@ Caused by:
       </ul>
 
       <p><strong>3. Testing Connectivity</strong></p>
-      <pre><code>Test-NetConnection -ComputerName 192.168.1.1 -Port 23
+      <pre><code>Test-NetConnection -ComputerName [gateway IP] -Port 23
 # Result: TcpTestSucceeded : False
 
-telnet 192.168.1.1
+telnet [gateway IP]
 # Result: Could not open connection to the host, on port 23: Connect failed</code></pre>
 
       <p>The device was pingable, but all TCP ports (22, 23, 24, 25) were closed. The network installer simply couldn't establish the telnet connection needed to install Rayhunter.</p>
@@ -360,10 +360,10 @@ PLEASE INSTALL FROM MACOS OR LINUX INSTEAD IF POSSIBLE</code></pre>
       <h3>Step 3: Verify Connectivity</h3>
       <p>In the Linux VM:</p>
       
-      <pre><code>ping 192.168.1.1
+      <pre><code>ping [gateway IP]
 # Success! 0% packet loss
 
-curl http://192.168.1.1
+curl http://[gateway IP]
 # Success! Got the Orbic admin page HTML</code></pre>
 
       <h3>Step 4: Run the Installer</h3>
@@ -386,7 +386,7 @@ curl http://192.168.1.1
       <p>Total installation time: About 3-5 minutes.</p>
 
       <h2>Verification</h2>
-      <p>After installation, I could access the Rayhunter web interface at http://192.168.1.1:8080/</p>
+      <p>After installation, I could access the Rayhunter web interface at http://[gateway IP]:8080/</p>
 
       <p>The interface showed:</p>
       <ul>
@@ -411,7 +411,7 @@ curl http://192.168.1.1
       </ul>
 
       <h3>Checking for Detections</h3>
-      <p>Connect your phone or computer to the Orbic's WiFi and visit http://192.168.1.1:8080/ to:</p>
+      <p>Connect your phone or computer to the Orbic's WiFi and visit http://[gateway IP]:8080/ to:</p>
       <ul>
         <li>View current recording status</li>
         <li>Check for warnings (informational, low, medium, high)</li>
