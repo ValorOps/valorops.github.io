@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="dark">
+  <title>Price your assessment | ValorOps Lab 01b: Quote graph</title>
+  <link rel="preload" href="fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip" href="#quote">Skip to the price builder</a>
+
+  <header class="folio">
+    <a href="/lab/">ValorOps Lab</a>
+    <span aria-hidden="true">/</span>
+    <span>01b Quote graph</span>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="mark">ValorOps</p>
+        <h1 id="hero-title">Know the <span class="accent">number</span> before we talk.</h1>
+        <p class="hero-sub">Fixed-scope Microsoft 365 assessments with published prices. Pick your size and package and the quote updates as you go.</p>
+      </div>
+
+      <div class="stage">
+        <div class="glow" aria-hidden="true"></div>
+        <div class="canvas">
+          <svg id="wires" class="wires" aria-hidden="true" focusable="false">
+            <path class="wire" data-from="n-size" d=""></path>
+            <path class="wire" data-from="n-package" d=""></path>
+            <path class="wire" data-from="n-addons" d=""></path>
+          </svg>
+
+          <form id="quote" class="inputs" aria-label="Price builder">
+            <fieldset class="node" id="n-size">
+              <legend class="node-title"><span class="port" aria-hidden="true"></span>Team size</legend>
+              <div class="seg">
+                <label><input type="radio" name="size" value="le25" checked><span>Up to 25</span></label>
+                <label><input type="radio" name="size" value="le50"><span>26 to 50</span></label>
+                <label><input type="radio" name="size" value="gt50"><span>Over 50</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="node" id="n-package">
+              <legend class="node-title"><span class="port" aria-hidden="true"></span>Package</legend>
+              <div class="stack">
+                <label><input type="radio" name="package" value="baseline" checked><span>M365 Security Baseline</span></label>
+                <label><input type="radio" name="package" value="ai"><span>AI Readiness and Governance</span></label>
+                <label><input type="radio" name="package" value="full"><span>Full Assessment plus 30-day recheck</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="node" id="n-addons">
+              <legend class="node-title"><span class="port" aria-hidden="true"></span>Add-ons</legend>
+              <label class="check"><input type="checkbox" name="core11"><span>Core 11 security policy program</span></label>
+              <label class="range" for="hours">Remediation estimate <output id="hours-out" for="hours">0 hours</output></label>
+              <input type="range" id="hours" name="hours" min="0" max="40" step="4" value="0">
+            </fieldset>
+          </form>
+
+          <aside class="node node-quote" id="quote-node" aria-labelledby="quote-title">
+            <h2 class="node-title" id="quote-title"><span class="port port-in" aria-hidden="true"></span>Your quote</h2>
+            <ul class="q-lines">
+              <li><span>M365 Security Baseline, up to 25 users</span><span>$1,500</span></li>
+            </ul>
+            <div class="q-total" aria-live="polite"><span class="q-label">Fixed price</span><span class="q-amount">$1,500</span></div>
+            <p class="q-remed">No remediation estimate added. Remediation is billed separately at $150 per hour.</p>
+            <p class="q-time">5 business days from access</p>
+            <a class="cta" href="https://valor-ops.com/contact/">Book a 30-minute call</a>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="statement" aria-label="Positioning">
+      <p><strong>Know where your Microsoft 365 security stands.</strong> Independent, read-only assessments for businesses that run on Microsoft 365. A report your insurer, your IT vendor, and your leadership can each act on.</p>
+    </section>
+
+    <section class="packages price-list" aria-labelledby="packages-title">
+      <div class="thread" aria-hidden="true"></div>
+      <h2 id="packages-title">Every price, in plain text</h2>
+      <div class="pkg-grid">
+        <article class="pkg">
+          <h3>M365 Security Baseline</h3>
+          <p class="pkg-price"><span class="amt">$1,500</span> up to 25 users</p>
+          <p class="pkg-price-2">$2,500 for 26 to 50</p>
+          <p class="pkg-time">5 business days from access</p>
+          <p class="pkg-summary">A read-only review of identity, mail security, sharing, logging, backup coverage, and device compliance, scored against Microsoft Secure Score.</p>
+          <ul class="pkg-detail">
+            <li>Scored report with exact fixes</li>
+            <li>Prioritized fix list for your IT vendor</li>
+            <li>Cyber insurance questionnaire answers</li>
+          </ul>
+        </article>
+        <article class="pkg">
+          <h3>AI Readiness and Governance</h3>
+          <p class="pkg-price"><span class="amt">$2,000</span> any size up to 50 users</p>
+          <p class="pkg-price-2">One price up to 50</p>
+          <p class="pkg-time">5 business days from access</p>
+          <p class="pkg-summary">Where client data can leak into AI tools: SharePoint and OneDrive oversharing, labels, DLP, Copilot posture, and what staff are actually using.</p>
+          <ul class="pkg-detail">
+            <li>Oversharing report</li>
+            <li>Copilot go or no-go checklist</li>
+            <li>AI acceptable use policy, ready for the firm to adopt</li>
+          </ul>
+        </article>
+        <article class="pkg pkg-feature">
+          <h3>Full Assessment plus 30-day recheck</h3>
+          <p class="pkg-price"><span class="amt">$3,500</span> up to 25 users</p>
+          <p class="pkg-price-2">$4,500 for 26 to 50</p>
+          <p class="pkg-time">10 business days from access, plus the recheck</p>
+          <p class="pkg-summary">Both assessments in one combined report, then a 30-day follow-up to confirm the fixes landed. Same price as buying both separately; the recheck is what you gain.</p>
+          <ul class="pkg-detail">
+            <li>Everything in both packages</li>
+            <li>Before and after Secure Score scorecard</li>
+            <li>Something to show an insurer or client</li>
+          </ul>
+        </article>
+      </div>
+      <p class="extras">Over 50 users is quoted after a short scoping call. The Core 11 security policy program is $3,900, written and signed for your organization. Remediation is separate, at $150 per hour, or handed to your existing IT vendor with a written scope.</p>
+    </section>
+
+    <section class="close" aria-labelledby="close-title">
+      <h2 id="close-title">Thirty minutes to find out which package fits, or whether you need one at all.</h2>
+      <a class="cta" href="https://valor-ops.com/contact/">Book a 30-minute call</a>
+    </section>
+  </main>
+
+  <footer class="colophon">
+    <p>Lab experiment 01b. Quote graph: live price builder, light as material, every price in plain text. Content from valor-ops.com.</p>
+  </footer>
+  <script src="quote.js" defer></script>
+</body>
+</html>

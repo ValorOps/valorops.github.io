@@ -2,7 +2,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-export const LAB_PAGES = ['/lab/', '/lab/01-materials/'];
+export const LAB_PAGES = ['/lab/', '/lab/01-materials/', '/lab/01b-quote/'];
 const ORIGIN = 'http://127.0.0.1:4500';
 
 async function load(page, path) {

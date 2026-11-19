@@ -4,3 +4,7 @@ shots/
 playwright-report/
 shot.tmp.mjs
 lens.tmp.mjs
+pz.tmp.mjs
+sites.tmp.mjs
+ovf.tmp.mjs
+scr.tmp.mjs
