@@ -120,5 +120,7 @@ form.addEventListener('submit', (e) => e.preventDefault());
 addEventListener('resize', drawWires);
 new ResizeObserver(drawWires).observe(canvas);
 document.fonts.ready.then(drawWires);
+// Pause the flowing wires when the graph is off screen.
+new IntersectionObserver(([e]) => canvas.classList.toggle('is-offscreen', !e.isIntersecting)).observe(canvas);
 render();
 drawWires();

@@ -107,3 +107,63 @@ test.describe('exp01b reduced motion', () => {
     expect(name).toBe('none');
   });
 });
+
+test.describe('exp01b v2.1 wires stay lit', () => {
+  test('wires keep flowing after the change pulse ends', async ({ page }) => {
+    await page.goto(URL);
+    await pick(page, 'package', 'full');
+    await page.waitForTimeout(1500);
+    const w = page.locator('#wires path.wire').first();
+    expect(await w.evaluate((el) => getComputedStyle(el).animationName)).not.toBe('none');
+    expect(await w.evaluate((el) => getComputedStyle(el).animationIterationCount)).toBe('infinite');
+  });
+
+  test('wires use the accent colour at rest', async ({ page }) => {
+    await page.goto(URL);
+    const [stroke, accent] = await page.evaluate(() => {
+      const probe = document.createElement('i');
+      probe.style.color = 'var(--accent)';
+      document.body.append(probe);
+      const a = getComputedStyle(probe).color;
+      probe.remove();
+      return [getComputedStyle(document.querySelector('#wires path.wire')).stroke, a];
+    });
+    const rgb = (s) => s.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number);
+    expect(rgb(stroke)).toEqual(rgb(accent));
+  });
+});
+
+test.describe('exp01b palette switcher', () => {
+  test('default palette is arctic', async ({ page }) => {
+    await page.goto(URL);
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'arctic');
+  });
+
+  test('choosing a palette regrades the page and persists via the URL', async ({ page }) => {
+    await page.goto(URL);
+    const before = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+    await page.locator('.palette input[value="phosphor"]').check({ force: true });
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'phosphor');
+    const after = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+    expect(after).not.toBe(before);
+    await expect(page).toHaveURL(/palette=phosphor/);
+  });
+
+  test('palette param on load is applied', async ({ page }) => {
+    await page.goto(URL + '?palette=oxide');
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'oxide');
+    await expect(page.locator('.palette input[value="oxide"]')).toBeChecked();
+  });
+
+  for (const p of ['signal', 'arctic', 'phosphor', 'oxide']) {
+    test(`button text contrast holds in ${p}`, async ({ page }) => {
+      await page.goto(URL + '?palette=' + p);
+      const ratio = await page.locator('a.cta').first().evaluate((el) => {
+        const lum = (c) => { const v = c.match(/\d+(\.\d+)?/g).slice(0, 3).map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+        const s = getComputedStyle(el); const a = lum(s.color), b = lum(s.backgroundColor);
+        return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+      });
+      expect(ratio).toBeGreaterThanOrEqual(4.5);
+    });
+  }
+});
