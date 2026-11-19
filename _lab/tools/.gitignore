@@ -2,3 +2,4 @@ node_modules/
 test-results/
 shots/
 playwright-report/
+shot.tmp.mjs
