@@ -1,0 +1,10 @@
+:root { color-scheme: dark; --canvas: #0e1012; --ink: #e9ecee; --ink-soft: #a7afb6; --accent: #ff6b2c; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--canvas); color: var(--ink); font: 1.0625rem/1.6 system-ui, -apple-system, sans-serif; }
+main { max-width: 40rem; padding: clamp(3rem, 10vw, 7rem) clamp(1.25rem, 5vw, 3rem); margin: 0 auto; }
+h1 { font-size: clamp(2rem, 1.4rem + 3vw, 3.2rem); line-height: 1.05; letter-spacing: -0.03em; margin: 0 0 1rem; }
+p { color: var(--ink-soft); margin: 0 0 2.5rem; }
+.experiments { padding-left: 1.2rem; }
+a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 0.25em; text-decoration-thickness: 2px; }
+a:hover { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }

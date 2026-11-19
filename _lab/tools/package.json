@@ -1,0 +1,13 @@
+{
+  "name": "valorops-lab-tools",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "playwright test" },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.56.0",
+    "@fontsource-variable/archivo": "^5.0.0",
+    "@fontsource/geist": "^5.0.0",
+    "@fontsource/geist-mono": "^5.0.0"
+  }
+}
