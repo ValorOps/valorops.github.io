@@ -8,6 +8,10 @@ valorops.dev is the test bench, not the deliverable. The goal is range: get bett
 
 This is a start from scratch. No palette, texture or aesthetic is locked, including the current brass, oxide and aged-metal direction. Every experiment is free to try a different look; the lab's job is to find out what works for ValorOps and what does not.
 
+## Revision 2026-11-20
+
+The ValorOps direction is settled (Oxide palette, light over texture, quote graph; see the "ValorOps Web Design Lab: Findings" doc). From experiment 02 on, the lab uses clearly fictional subjects again, with their own palettes, so techniques are judged without ValorOps bias. Fictional brands never imitate a real company and carry no invented stats, reviews or clients presented as real. Winning techniques are translated back into ValorOps and client work afterwards.
+
 ## Goals
 
 - A `/lab/` section on valorops.dev with small standalone experiment pages, each pushing one technique family.
