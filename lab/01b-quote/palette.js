@@ -2,7 +2,7 @@
 // Order of precedence: ?palette= in the URL, then the last choice on this device, then the default.
 (() => {
   const PALETTES = ['arctic', 'signal', 'phosphor', 'oxide'];
-  const DEFAULT = 'arctic';
+  const DEFAULT = 'oxide';
   const root = document.documentElement;
   let p = new URLSearchParams(location.search).get('palette');
   if (!PALETTES.includes(p)) {

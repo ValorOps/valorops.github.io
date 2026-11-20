@@ -134,9 +134,9 @@ test.describe('exp01b v2.1 wires stay lit', () => {
 });
 
 test.describe('exp01b palette switcher', () => {
-  test('default palette is arctic', async ({ page }) => {
+  test('default palette is oxide', async ({ page }) => {
     await page.goto(URL);
-    await expect(page.locator('html')).toHaveAttribute('data-palette', 'arctic');
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'oxide');
   });
 
   test('choosing a palette regrades the page and persists via the URL', async ({ page }) => {
