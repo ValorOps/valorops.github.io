@@ -47,6 +47,7 @@ html[data-palette="phosphor"] { --canvas: #090d0b; --surface: #111813; --surface
 html[data-palette="oxide"] { --canvas: #0b0f10; --surface: #131a1b; --surface-2: #192224; --ink: #ece6da; --ink-soft: #a39a8a; --ink-dim: #7a7366; --accent: #d9a441; --accent-ink: #1a1204; --cool: #3fb6a0; --shadow: 180 25% 3%; }
 
 * { box-sizing: border-box; }
+html.palette-switching *, html.palette-switching *::before, html.palette-switching *::after { transition: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--canvas); color: var(--ink); font: 400 var(--t-base)/1.62 var(--font-text); }
 body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 50; background: url("noise.svg") 0 0 / 240px 240px repeat; opacity: .045; mix-blend-mode: overlay; }

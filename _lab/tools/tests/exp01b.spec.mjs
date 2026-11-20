@@ -167,3 +167,16 @@ test.describe('exp01b palette switcher', () => {
     });
   }
 });
+
+test.describe('exp01b palette switch is instant', () => {
+  test('buttons and selected options take the new accent immediately', async ({ page }) => {
+    await page.goto(URL + '?palette=signal');
+    await page.locator('.palette input[value="phosphor"]').check({ force: true });
+    const got = await page.evaluate(() => [
+      getComputedStyle(document.querySelector('.cta')).backgroundColor,
+      getComputedStyle(document.querySelector('.seg input:checked + span')).backgroundColor,
+      getComputedStyle(document.querySelector('.stack input:checked + span')).backgroundColor,
+    ]);
+    expect(got).toEqual(['rgb(110, 240, 154)', 'rgb(110, 240, 154)', 'rgb(110, 240, 154)']);
+  });
+});

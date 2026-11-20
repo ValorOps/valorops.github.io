@@ -19,7 +19,12 @@
     box.addEventListener('change', (e) => {
       const v = e.target.value;
       if (!PALETTES.includes(v)) return;
+      // Switch with transitions off: hidden tabs freeze transitions at their start value and
+      // WebKit can skip transitions driven by a changed custom property, leaving stale colours.
+      root.classList.add('palette-switching');
       root.dataset.palette = v;
+      void root.offsetHeight;
+      requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('palette-switching')));
       try { localStorage.setItem('lab-palette', v); } catch { /* storage unavailable: URL still carries it */ }
       const u = new URL(location.href);
       u.searchParams.set('palette', v);
